@@ -58,7 +58,7 @@ ReferenceServer.prototype.getDatasetNames = function(req, responder) {
 };
 
 /**
- * ### ReferenceServer.getQueueitem()
+ * ### ReferenceServer.getQueueitems()
  * 
  * Retrieves a list of Queueitem from a previously known one.
  *
@@ -71,7 +71,7 @@ ReferenceServer.prototype.getDatasetNames = function(req, responder) {
  *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
  *   * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
-ReferenceServer.prototype.getQueueitem = function(req, responder) {
+ReferenceServer.prototype.getQueueitems = function(req, responder) {
 	var reqInfo = this._extractInfoFromRequest(req, ['seqId']);
 	if (!this._validateInputFieldAgainstRegexp(
 		's',
@@ -80,9 +80,48 @@ ReferenceServer.prototype.getQueueitem = function(req, responder) {
 	)) {
 		return responder('validation_error',null);
 	}
-	this._inst.getQueueitem(
+	this._inst.getQueueitems(
 		reqInfo.s,
 		reqInfo.hasOwnProperty('seqId') ? reqInfo.seqId : null,
+		responder
+	);
+};
+
+/**
+ * ### ReferenceServer.getDatasetDatakeyVersion()
+ * 
+ * Retrieves a list of Queueitem from a previously known one.
+ *
+ * #### Parameters
+ *
+ * * **@param {Request} `req`** A Express like Request Object
+ *   * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
+ *   * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to download updates from
+ *   * **@param {String} `req.(param|query|body).v`** OPTIONAL: The version of the change you want to get.
+ * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
+ *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *   * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
+ */
+ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
+	var reqInfo = this._extractInfoFromRequest(req, ['v']);
+	if (!this._validateInputFieldAgainstRegexp(
+		's',
+		SyncIt_Constant.Validation.DATASET_REGEXP,
+		reqInfo
+	)) {
+		return responder('validation_error',null);
+	}
+	if (!this._validateInputFieldAgainstRegexp(
+		'k',
+		SyncIt_Constant.Validation.DATAKEY_REGEXP,
+		reqInfo
+	)) {
+		return responder('validation_error',null);
+	}
+	this._inst.getDatasetDatakeyVersion(
+		reqInfo.s,
+		reqInfo.k,
+		reqInfo.hasOwnProperty('v') ? reqInfo.v : null,
 		responder
 	);
 };

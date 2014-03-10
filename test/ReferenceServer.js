@@ -206,13 +206,6 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 
 describe('SyncItTestServ can respond to data requests',function() {
 	
-	var syncItServ = new ReferenceServer(
-		getModifierFromRequestHackFunc,
-		new ServerImplementation(
-			new SyncIt_ServerPersist_MemoryAsync()
-		)
-	);
-	
 	var injectR = function(ob) {
 		var r = JSON.parse(JSON.stringify(ob));
 		r.r = false;
@@ -220,6 +213,13 @@ describe('SyncItTestServ can respond to data requests',function() {
 	};
 	
 	it('when there is a point to go from',function(done) {
+		
+		var syncItServ = new ReferenceServer(
+			getModifierFromRequestHackFunc,
+			new ServerImplementation(
+				new SyncIt_ServerPersist_MemoryAsync()
+			)
+		);
 		
 		var data1 = { body: {
 			s: 'usersA',
@@ -245,7 +245,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			expect(status).to.equal('created');
 			syncItServ.PATCH(data2, function(status /*, result */) {	
 				expect(status).to.equal('ok');
-				syncItServ.getQueueitem(
+				syncItServ.getQueueitems(
 					{
 						params: {s: 'usersA'},
 						body: {m: 'me'},
@@ -265,6 +265,13 @@ describe('SyncItTestServ can respond to data requests',function() {
 	});
 	
 	it('when there is no point to go from',function(done) {
+		
+		var syncItServ = new ReferenceServer(
+			getModifierFromRequestHackFunc,
+			new ServerImplementation(
+				new SyncIt_ServerPersist_MemoryAsync()
+			)
+		);
 		
 		var data1 = { body: {
 			s: 'usersB',
@@ -290,7 +297,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			expect(status).to.equal('created');
 			syncItServ.PATCH(data2, function(status /*, result */) {	
 				expect(status).to.equal('ok');				  
-				syncItServ.getQueueitem(
+				syncItServ.getQueueitems(
 					{ params: {s: 'usersB'}, body: {m: 'me'} },
 					function(status, data) {
 						expect(status).to.equal('ok');
@@ -307,6 +314,54 @@ describe('SyncItTestServ can respond to data requests',function() {
 			});
 		});
 		
+	});
+	
+	it('for items at a specific version',function(done) {
+	
+		var syncItServ = new ReferenceServer(
+			getModifierFromRequestHackFunc,
+			new ServerImplementation(
+				new SyncIt_ServerPersist_MemoryAsync()
+			)
+		);
+		
+		var data1 = { body: {
+			s: 'usersB',
+			k: 'me',
+			b: 0,
+			m: 'me',
+			t: new Date().getTime(),
+			o: 'set',
+			u: {name: "Jack Smith" }
+		} };
+		
+		var data2 = { body: {
+			s: 'usersB',
+			k: 'me',
+			b: 1,
+			m: 'me',
+			t: new Date().getTime(),
+			o: 'update',
+			u: {eyes: "Blue" }
+		} };
+		
+		syncItServ.PUT(data1, function(status /*, result */) {
+			expect(status).to.equal('created');
+			syncItServ.PATCH(data2, function(status /*, result */) {	
+				expect(status).to.equal('ok');
+				
+				syncItServ.getDatasetDatakeyVersion(
+					{body: {s: 'usersB', k: 'me', v: 1, m: 'me'}},
+					function(status, data) {
+						expect(status).to.equal('ok');
+						expect(data.u).to.eql({name: "Jack Smith" });
+						done();
+					}
+				);
+				
+			});
+		});
+	
 	});
 	
 	

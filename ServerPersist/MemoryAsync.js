@@ -4,16 +4,15 @@
 	if (typeof exports === 'object') {
 		module.exports = factory(
 			require('syncit/js/Constant.js'),
-			require('syncit/js/updateResult.js'),
 			require('./CommonFuncs.js')
 		);
 	} else {
 		define(
-			['syncit/Constant','syncit/updateResult','./CommonFuncs'],
+			['syncit/Constant','./CommonFuncs'],
 			factory
 		);
 	}
-})(this, function (SyncIt_Constant,updateResult,CommonFuncs) {
+})(this, function (SyncIt_Constant,CommonFuncs) {
 
 "use strict";
 
@@ -180,7 +179,7 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetNames = function(done) {
 };
 
 /**
- * ### SyncIt_ServerPersist_MemoryAsync.getQueueitem()
+ * ### SyncIt_ServerPersist_MemoryAsync.getQueueitems()
  * 
  * #### Parameters
  * 
@@ -191,7 +190,7 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetNames = function(done) {
  *   * **@param {Array} `done.queueitems`** An array of Queueitem
  *   * **@param {Object} `done.lastQueueitemIdentifier`** The internal reference of that last item, passing this to this function again will lead to continual reading.
  */
-SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitem = function(dataset,fromSeqId,done) {
+SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset,fromSeqId,done) {
 	
 	(makeLaggy(function() {
 		var r = [],
@@ -226,6 +225,41 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitem = function(dataset,fromS
 			}
 		}
 		return done(SyncIt_Constant.Error.OK, r, lastId);
+	}.bind(this),200))();
+	
+};
+
+/**
+ * ### SyncIt_ServerPersist_MemoryAsync.getDatasetDatakeyVersion()
+ * 
+ * #### Parameters
+ * 
+ * * **@param {String} `dataset`** The *Dataset* you want to download the update for
+ * * **@param {String} `datakey`** The *Datakey* you want to download the update for
+ * * **@param {Number} `version`** The *Version* of the update you want to get
+ * * **@param {Function} `done`** Signature: `done(err, queueitems, lastQueueitemIdentifier)`
+ *   * **@param {Number} `done.err`** See SyncIt_Constant.Error
+ *   * **@param {Object} `responder.data`** The change
+ */
+SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetDatakeyVersion = function(dataset,datakey,version,done) {
+	
+	(makeLaggy(function() {
+		var l = 0,
+			i = 0;
+		for (
+			i=0,l=this._d.length;
+			i<l;
+			i++
+		) {
+			if (
+				(this._d[i].s == dataset) &&
+				(this._d[i].k == datakey) &&
+				(this._d[i].b + 1 == version)
+			) {
+				return done(SyncIt_Constant.Error.OK, this._d[i]);
+			}
+		}
+		return done(SyncIt_Constant.Error.NO_DATA_FOUND);
 	}.bind(this),200))();
 	
 };

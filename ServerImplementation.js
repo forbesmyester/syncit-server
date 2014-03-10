@@ -44,7 +44,7 @@ TestServer.prototype.getDatasetNames = function(responder) {
 };
 
 /**
- * ### TestServer.getQueueitem()
+ * ### TestServer.getQueueitems()
  * 
  * Retrieves a list of Queueitem from a previously known one.
  *
@@ -56,14 +56,44 @@ TestServer.prototype.getDatasetNames = function(responder) {
  *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
  *   * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
-TestServer.prototype.getQueueitem = function(dataset, seqId,  responder) {
+TestServer.prototype.getQueueitems = function(dataset, seqId,  responder) {
 	
-	this._serverPersist.getQueueitem(
+	this._serverPersist.getQueueitems(
 		dataset,
 		seqId,
 		function(err, queueitems, toSeqId) {
 			if (err) { throw err; }
 			return responder('ok',{ queueitems: queueitems, seqId: toSeqId});
+		}
+	);
+};
+
+/**
+ * ### TestServer.getDatasetDatakeyVersion()
+ * 
+ * Retrieves a list of Queueitem from a previously known one.
+ *
+ * #### Parameters
+ *
+ * * **@param {String} `dataset`** The *Dataset* you want to download the update for
+ * * **@param {String} `datakey`** The *Datakey* you want to download the update for
+ * * **@param {Number} `version`** The *Version* of the update you want to get
+ * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
+ *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *   * **@param {Object} `responder.data`** The change
+ */
+TestServer.prototype.getDatasetDatakeyVersion = function(dataset, datakey, version, responder) {
+	
+	this._serverPersist.getDatasetDatakeyVersion(
+		dataset,
+		datakey,
+		version,
+		function(err, atVersion) {
+			if (err === SyncIt_Constant.Error.NO_DATA_FOUND) {
+				return responder('not_found',null);
+			}
+			if (err) { throw err; }
+			return responder('ok', atVersion);
 		}
 	);
 };
@@ -97,7 +127,7 @@ TestServer.prototype.getValue = function(dataset, datakey, responder) {
 };
 
 /**
- * ### TestServer._setRemoveOrUpdate()
+ * ### TestServer.push()
  * 
  * Attempts to add a Queueitem to a dataset / datakey.
  *

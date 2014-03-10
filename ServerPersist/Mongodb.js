@@ -12,7 +12,7 @@ module.exports = (function() {
 "use strict";
 
 var CommonFuncs = require('./CommonFuncs.js');
-var SyncIt_Constant = require('./Constant.js');
+var SyncIt_Constant = require('syncit/js/Constant.js');
 var getIncrementalNumber = require('./getIncrementalNumberFromMongodb');
 
 /**
@@ -97,7 +97,7 @@ SyncIt_ServerPersist_MongoDb.prototype._unserialize = function(rec) {
 };
 
 /**
- * ### SyncIt_ServerPersist_MemoryAsync.getQueueitem()
+ * ### SyncIt_ServerPersist_MemoryAsync.getQueueitems()
  * 
  * #### Parameters
  * 
@@ -108,7 +108,7 @@ SyncIt_ServerPersist_MongoDb.prototype._unserialize = function(rec) {
  *   * **@param {Array} `done.queueitems`** An array of Queueitem
  *   * **@param {Object} `done.lastQueueitemIdentifier`** The internal reference of that last item, passing this to this function again will lead to continual reading.
  */
-SyncIt_ServerPersist_MongoDb.prototype.getQueueitem = function(dataset, fromSeqId, done) {
+SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeqId, done) {
 	
 	var q = {"_id.s": dataset},
 		maxId = null;
@@ -132,6 +132,41 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitem = function(dataset, fromSeqI
 	
 };
 
+/**
+ * ### SyncIt_ServerPersist_MemoryAsync.getDatasetDatakeyVersion()
+ * 
+ * #### Parameters
+ * 
+ * * **@param {String} `dataset`** The *Dataset* you want to download the update for
+ * * **@param {String} `datakey`** The *Datakey* you want to download the update for
+ * * **@param {Number} `version`** The *Version* of the update you want to get
+ * * **@param {Function} `done`** Signature: `done(err, queueitems, lastQueueitemIdentifier)`
+ *   * **@param {Number} `done.err`** See SyncIt_Constant.Error
+ *   * **@param {Object} `responder.data`** The change
+ */
+SyncIt_ServerPersist_MongoDb.prototype.getDatasetDatakeyVersion = function(dataset, datakey, version, done) {
+	
+	var q = {"_id.s": dataset, "k": datakey, "b": parseInt(version,10)-1};
+	
+	this._find( this._dataCollection, q, function(err, items) {
+		if (err) {
+			throw new Error("SyncIt: MongoDB: getDatasetDatakeyVersion:", err, q);
+		}
+		if (items === null) {
+			return done(SyncIt_Constant.Error.NO_DATA_FOUND);
+		}
+		var i = items[0];
+		i.u = JSON.parse(i.u);
+		i.s = i._id.s;
+		delete i._id;
+		delete i.j.m;
+		done(
+			err,
+			items[0]
+		);
+	}.bind(this));
+	
+};
 
 SyncIt_ServerPersist_MongoDb.prototype.getLastQueueitem = function(dataset,datakey, done) {
 	return this._getLast(dataset, datakey, {}, done);
@@ -148,7 +183,10 @@ SyncIt_ServerPersist_MongoDb.prototype._getLast = function(dataset, datakey, pro
 			if (err) {
 				throw new Error("SyncIt: MongoDB: _getLast:", err, dataset, datakey, projection);
 			}
-			if (result === null) {
+			if (
+				(result === null) ||
+				(Array.isArray(result) && (result.length === 0))
+			) {
 				return done(SyncIt_Constant.Error.NO_DATA_FOUND, result);
 			}
 			result.s = result._id.s;

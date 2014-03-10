@@ -166,7 +166,47 @@
 					);
 				}
 			);
-		});		
+		});
+		
+		describe('when getting queueitem at version', function() {
+			it('will retreive lower bound values', function(done) {
+				sPMA.getDatasetDatakeyVersion('cars','ford',1, function(e,d) {
+					expect(e).to.equal(SyncIt_Constant.Error.OK);
+					expect(d.u).to.eql({
+						price:'affordable',
+						size:'mixed',
+						speed: 'medium',
+						drive: 'usually front'
+					});
+					done();
+				});
+			});
+			it('will retreive upper bound values', function(done) {
+				sPMA.getDatasetDatakeyVersion('cars','ford',2, function(e,d) {
+					expect(e).to.equal(SyncIt_Constant.Error.OK);
+					expect(d.u).to.eql({
+						price:'affordable',
+						size:'mixed',
+						speed: 'medium',
+						drive: 'usually front'
+					});
+					done();
+				});
+			});
+			it('will error gracefully values (1)', function(done) {
+				sPMA.getDatasetDatakeyVersion('cars','ford',0, function(e) {
+					expect(e).to.equal(SyncIt_Constant.Error.NO_DATA_FOUND);
+					done();
+				});
+			});
+			it('will error gracefully values (2)', function(done) {
+				sPMA.getDatasetDatakeyVersion('cars','ford',3, function(e) {
+					expect(e).to.equal(SyncIt_Constant.Error.NO_DATA_FOUND);
+					done();
+				});
+			});
+			
+		});
 		
 		describe('when getting stored values',function() {
 			
@@ -197,7 +237,7 @@
 		describe('when getting the queue',function() {
 			
 			it('will retrieve with OK if found from start',function(done) {
-				sPMA.getQueueitem(
+				sPMA.getQueueitems(
 					'cars',
 					null,
 					function(err,queueitems) {
@@ -210,7 +250,7 @@
 			});
 			
 			it('will retrieve with OK if found from middle',function(done) {
-				sPMA.getQueueitem(
+				sPMA.getQueueitems(
 					'cars',
 					'cars.ford@1',
 					function(err,queueitems) {
@@ -223,7 +263,7 @@
 			});
 			
 			it('will handle out of bounds fromPosition',function(done) {
-				sPMA.getQueueitem(
+				sPMA.getQueueitems(
 					'cars',
 					5,
 					function(err,queueitems) {
@@ -235,7 +275,7 @@
 			});
 			
 			it('will retrieve with OK if not found with zero records',function(done) {
-				sPMA.getQueueitem(
+				sPMA.getQueueitems(
 					'boats',
 					null,
 					function(err,queueitems) {
