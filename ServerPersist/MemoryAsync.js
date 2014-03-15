@@ -3,12 +3,12 @@
 	
 	if (typeof exports === 'object') {
 		module.exports = factory(
-			require('syncit/js/Constant.js'),
+			require('sync-it/Constant.js'),
 			require('./CommonFuncs.js')
 		);
 	} else {
 		define(
-			['syncit/Constant','./CommonFuncs'],
+			['sync-it/Constant','./CommonFuncs'],
 			factory
 		);
 	}

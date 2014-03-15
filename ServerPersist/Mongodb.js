@@ -12,7 +12,7 @@ module.exports = (function() {
 "use strict";
 
 var CommonFuncs = require('./CommonFuncs.js');
-var SyncIt_Constant = require('syncit/js/Constant.js');
+var SyncIt_Constant = require('sync-it/Constant.js');
 var getIncrementalNumber = require('./getIncrementalNumberFromMongodb');
 
 /**

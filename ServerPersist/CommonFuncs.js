@@ -3,12 +3,12 @@
 	
 	if (typeof exports === 'object') {
 		module.exports = factory(
-			require('syncit/js/Constant.js'),
-			require('syncit/js/updateResult.js')
+			require('sync-it/Constant.js'),
+			require('sync-it/updateResult.js')
 		);
 	} else {
 		define(
-			['syncit/Constant','syncit/updateResult'],
+			['sync-it/Constant','sync-it/updateResult'],
 			factory
 		);
 	}

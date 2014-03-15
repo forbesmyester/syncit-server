@@ -3,12 +3,12 @@
 	
 	if (typeof exports === 'object') {
 		module.exports = factory(
-			require('syncit/js/Constant.js'),
+			require('sync-it/Constant.js'),
 			require('add-events')
 		);
 	} else {
 		define(
-			['syncit/Constant', 'add-events'],
+			['sync-it/Constant', 'add-events'],
 			factory
 		);
 	}

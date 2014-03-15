@@ -1,9 +1,9 @@
 (function (root, factory) { // UMD adapted from https://github.com/umdjs/umd/blob/master/returnExports.js
 	"use strict";
 	if (typeof exports === 'object') {
-		module.exports = factory(require('syncit/js/Constant'));
+		module.exports = factory(require('sync-it/Constant'));
 	} else {
-		define(['syncit/Constant'], factory);
+		define(['sync-it/Constant'], factory);
 	}
 })(this, function (SyncIt_Constant) {
 

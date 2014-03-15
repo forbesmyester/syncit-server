@@ -6,24 +6,17 @@
 		// like Node.
 		module.exports = factory(
 			require('expect.js'),
-			require('syncit/js/Constant.js'),
+			require('sync-it/Constant.js'),
 			require('../../ServerPersist/MemoryAsync.js')
 		);
-	} else if (typeof define === 'function' && define.amd) {
+	} else {
 		// AMD. Register as an anonymous module.
 		define(
 			[
-				'syncit/Constant',
+				'sync-it/Constant',
 				'../../ServerPersist/MemoryAsync'
 			],
 			factory.bind(this, expect)
-		);
-	} else {
-		// Browser globals (root is window)
-		root.returnExports = factory(
-			root.expect,
-			root.SyncIt_Constant,
-			root.SyncIt_ServerPersist_MemoryAsync
 		);
 	}
 })(this, function (
