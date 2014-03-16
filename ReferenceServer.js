@@ -33,12 +33,13 @@ var queueitemProperties = ['s','k','b','m','t','u','o'];
  * * **@param {ServerImplementation} `serverImplementation`**
  * * **@param {Function} `extractModifierFromRequestFunc`** This function will be used to get the modifier for a Dataset / Datakey, it is anticipated this is from the Express Request.
  */
-var ReferenceServer = function(extractModifierFromRequestFunc, serverImplementation) {
+var ReferenceServer = function(extractModifierFromRequestFunc, serverImplementation, sseCommunication) {
 	if (typeof extractModifierFromRequestFunc != 'function') {
 		throw "You must specify a way to get the modifier";
 	}
 	this._getModifier = extractModifierFromRequestFunc;
 	this._inst = serverImplementation;
+	this._sseCommunication = sseCommunication;
 };
 
 /**
@@ -188,18 +189,39 @@ ReferenceServer.prototype.push = function(req, responder) {
 	}
 	
 	this._inst.push(queueitem, function(status, data) {
-		if (['ok', 'created'].indexOf(status) !== -1) {
-			this._emit(
-				'fed',
-				req,
-				data.seqId,
-				data.queueitem.s,
-				data.queueitem.k,
-				data.queueitem,
-				data.jrec
-			);
-		}
-		responder(status, data);
+		if (['ok', 'created'].indexOf(status) === -1) {
+			return responder(status, data);
+		};
+		
+		this._emit(
+			'fed',
+			req,
+			data.seqId,
+			data.queueitem.s,
+			data.queueitem.k,
+			data.queueitem,
+			data.jrec
+		);
+		
+		this._sseCommunication.send(
+			req.params.deviceId,
+			data.queueitem.s,
+			'queueitem',
+			{
+				queueitem: data.queueitem,
+				seqId: data.seqId
+			}
+		);
+		
+		responder(status, {
+			sequence: '/syncit/sequence/' + 
+				data.queueitem.s + '/' + data.seqId,
+			change: '/syncit/change/' +
+				data.queueitem.s + '/' +
+				data.queueitem.k + '/' + 
+				(data.queueitem.b + 1)
+		});
+		
 	}.bind(this));
 	
 };
@@ -433,6 +455,30 @@ ReferenceServer.prototype.listen = function(event,listener) {
 	return true;
 };
 
+ReferenceServer.prototype.sync = function(req, res) {
+	"use strict";
+	
+	if (
+		(!req.query.hasOwnProperty('dataset')) ||
+		(!Array.isArray(req.query.dataset))
+	) {
+		return res.send(400, "You must specify a list of dataset");
+	}
+	
+	res.writeHead(200, {
+		'Content-Type': 'text/event-stream',
+		'Cache-Control': 'no-cache',
+		'Connection': 'keep-alive'
+	});
+	
+	this._sseCommunication.register(
+		req.params.deviceId,
+		req.query.dataset,
+		res
+	);
+};
+
+	
 addEvents(ReferenceServer,['fed']);
 
 return ReferenceServer;
