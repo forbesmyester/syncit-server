@@ -48,7 +48,7 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		new ServerImplementation(
 			new SyncIt_ServerPersist_MemoryAsync()
 		),
-        {send: function() {}}
+		{send: function() {}}
 	);
 	
 	var emitCount = 0;
@@ -218,7 +218,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			new ServerImplementation(
 				new SyncIt_ServerPersist_MemoryAsync()
 			),
-            { send: function() {} }
+			{ send: function() {} }
 		);
 		
 		var data1 = { body: {
@@ -271,7 +271,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			new ServerImplementation(
 				new SyncIt_ServerPersist_MemoryAsync()
 			),
-            { send: function() {} }
+			{ send: function() {} }
 		);
 		
 		var data1 = { body: {
@@ -324,7 +324,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			new ServerImplementation(
 				new SyncIt_ServerPersist_MemoryAsync()
 			),
-            { send: function() {} }
+			{ send: function() {} }
 		);
 		
 		var data1 = { body: {

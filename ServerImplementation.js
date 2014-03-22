@@ -34,8 +34,8 @@ var TestServer = function(serverPersist) {
  * #### Parameters
  *
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** Always 'ok'
- *   * **@param {Array} `responder.data`** An Array of *Dataset* names
+ *	 * **@param {String} `responder.statusString`** Always 'ok'
+ *	 * **@param {Array} `responder.data`** An Array of *Dataset* names
  */
 TestServer.prototype.getDatasetNames = function(responder) {
 	this._serverPersist.getDatasetNames(function(err, names) {
@@ -53,8 +53,8 @@ TestServer.prototype.getDatasetNames = function(responder) {
  * * **@param {String} `dataset`** REQUIRED: The *Dataset* you want to download updates from
  * * **@param {String|null} `seqId`** The last known Id for a Queueitem, if not undefined all items from, but not including that Queueitem will be downloaded.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
- *   * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
+ *	 * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 TestServer.prototype.getQueueitems = function(dataset, seqId,  responder) {
 	
@@ -79,8 +79,8 @@ TestServer.prototype.getQueueitems = function(dataset, seqId,  responder) {
  * * **@param {String} `datakey`** The *Datakey* you want to download the update for
  * * **@param {Number} `version`** The *Version* of the update you want to get
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
- *   * **@param {Object} `responder.data`** The change
+ *	 * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {Object} `responder.data`** The change
  */
 TestServer.prototype.getDatasetDatakeyVersion = function(dataset, datakey, version, responder) {
 	
@@ -106,8 +106,8 @@ TestServer.prototype.getDatasetDatakeyVersion = function(dataset, datakey, versi
  * * **@param {String} `dataset`** REQUIRED: The *Dataset* you want to get the value from.
  * * **@param {String} `datakey`** REQUIRED: The *Datakey* you want to get the value from.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** `validation_error` if not given a valid looking Dataset and Datakey. `not_found` If the Dataset and Datakey has no records. `gone` If there was data, but it has been deleted. `ok` should data be found.
- *   * **@param {Object} `responder.data`** The Jrec stored at that location.
+ *	 * **@param {String} `responder.statusString`** `validation_error` if not given a valid looking Dataset and Datakey. `not_found` If the Dataset and Datakey has no records. `gone` If there was data, but it has been deleted. `ok` should data be found.
+ *	 * **@param {Object} `responder.data`** The Jrec stored at that location.
  */
 TestServer.prototype.getValue = function(dataset, datakey, responder) {
 	
@@ -133,10 +133,10 @@ TestServer.prototype.getValue = function(dataset, datakey, responder) {
  *
  * * **@param {Queueitem} `queueitem`** Should look like a Queueitem.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** Quite a set... `validation_error` || `service_unavailable` || `conflict` || `out_of_date` || `gone` || `created` || `ok`
- *   * **@param {Object} `responder.data`**
- *   * **@param {String} `responder.data.seqId`** The update number within the Dataset
- *   * **@param {Queueitem} `responder.data.queueitem`** The Queueitem which has just been added
+ *	 * **@param {String} `responder.statusString`** Quite a set... `validation_error` || `service_unavailable` || `conflict` || `out_of_date` || `gone` || `created` || `ok`
+ *	 * **@param {Object} `responder.data`**
+ *	 * **@param {String} `responder.data.seqId`** The update number within the Dataset
+ *	 * **@param {Queueitem} `responder.data.queueitem`** The Queueitem which has just been added
  */
 TestServer.prototype.push = function(queueitem,responder) {
 	

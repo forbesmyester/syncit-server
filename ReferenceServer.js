@@ -51,8 +51,8 @@ var ReferenceServer = function(extractModifierFromRequestFunc, serverImplementat
  *
  * * **@param {Request} `req`** A Express like Request Object
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** Always 'ok'
- *   * **@param {Array} `responder.data`** An Array of *Dataset* names
+ *	 * **@param {String} `responder.statusString`** Always 'ok'
+ *	 * **@param {Array} `responder.data`** An Array of *Dataset* names
  */
 ReferenceServer.prototype.getDatasetNames = function(req, responder) {
 	this._inst.getDatasetNames(responder);
@@ -66,11 +66,11 @@ ReferenceServer.prototype.getDatasetNames = function(req, responder) {
  * #### Parameters
  *
  * * **@param {Request} `req`** A Express like Request Object
- *   * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
- *   * **@param {String} `req.(param|query|body).seqId`** OPTIONAL: The last known Id for a Queueitem, if supplied all items from, but not including that Queueitem will be downloaded.
+ *	 * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
+ *	 * **@param {String} `req.(param|query|body).seqId`** OPTIONAL: The last known Id for a Queueitem, if supplied all items from, but not including that Queueitem will be downloaded.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
- *   * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
+ *	 * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 ReferenceServer.prototype.getQueueitems = function(req, responder) {
 	var reqInfo = this._extractInfoFromRequest(req, ['seqId']);
@@ -96,12 +96,12 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
  * #### Parameters
  *
  * * **@param {Request} `req`** A Express like Request Object
- *   * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
- *   * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to download updates from
- *   * **@param {String} `req.(param|query|body).v`** OPTIONAL: The version of the change you want to get.
+ *	 * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
+ *	 * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to download updates from
+ *	 * **@param {String} `req.(param|query|body).v`** OPTIONAL: The version of the change you want to get.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
- *   * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
+ *	 * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
 	var reqInfo = this._extractInfoFromRequest(req, ['v']);
@@ -133,11 +133,11 @@ ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
  * #### Parameters
  *
  * * **@param {Request} `req`** A Express like Request Object
- *   * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to get the value from.
- *   * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to get the value from.
+ *	 * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to get the value from.
+ *	 * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to get the value from.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** `validation_error` if not given a valid looking Dataset and Datakey. `not_found` If the Dataset and Datakey has no records. `gone` If there was data, but it has been deleted. `ok` should data be found.
- *   * **@param {Object} `responder.data`** The Jrec stored at that location.
+ *	 * **@param {String} `responder.statusString`** `validation_error` if not given a valid looking Dataset and Datakey. `not_found` If the Dataset and Datakey has no records. `gone` If there was data, but it has been deleted. `ok` should data be found.
+ *	 * **@param {Object} `responder.data`** The Jrec stored at that location.
  */
 ReferenceServer.prototype.getValue = function(req, responder) {
 	var reqInfo = this._extractInfoFromRequest(req);
@@ -165,12 +165,12 @@ ReferenceServer.prototype.getValue = function(req, responder) {
  * purpose function.
  *
  * * **@param {Request} `req`** A Express like Request Object
- *   * **@param {Object} `req.(param|query|body)`** Should look like a Queueitem.
+ *	 * **@param {Object} `req.(param|query|body)`** Should look like a Queueitem.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *   * **@param {String} `responder.statusString`** Quite a set... `validation_error` || `service_unavailable` || `conflict` || `out_of_date` || `gone` || `created` || `ok`
- *   * **@param {Object} `responder.data`**
- *   * **@param {String} `responder.data.seqId`** The update number within the Dataset
- *   * **@param {Queueitem} `responder.data.queueitem`** The Queueitem which has just been added
+ *	 * **@param {String} `responder.statusString`** Quite a set... `validation_error` || `service_unavailable` || `conflict` || `out_of_date` || `gone` || `created` || `ok`
+ *	 * **@param {Object} `responder.data`**
+ *	 * **@param {String} `responder.data.seqId`** The update number within the Dataset
+ *	 * **@param {Queueitem} `responder.data.queueitem`** The Queueitem which has just been added
  */
 ReferenceServer.prototype.push = function(req, responder) {
 
@@ -189,19 +189,22 @@ ReferenceServer.prototype.push = function(req, responder) {
 	}
 	
 	this._inst.push(queueitem, function(status, data) {
-        
-        if (status === 'see_other') {
-            return responder(status, {
-                change: '/syncit/change/' +
-                    data.queueitem.s + '/' +
-                    data.queueitem.k + '/' + 
-                    (data.queueitem.b + 1)
-            });
-        };
-        
+		
+		if (status === 'see_other') {
+			if (data.hasOwnProperty('queueitem')) {
+				return responder(status, {
+					change: '/syncit/change/' +
+						data.queueitem.s + '/' +
+						data.queueitem.k + '/' +
+						(data.queueitem.b + 1)
+				});
+			}
+			return responder(status);
+		}
+		
 		if (['ok', 'created'].indexOf(status) === -1) {
 			return responder(status);
-		};
+		}
 		
 		this._emit(
 			'fed',
@@ -282,13 +285,13 @@ ReferenceServer.prototype.DELETE = function(req,responder) {
  * 
  * ```
  * {
- *     s: <Dataset>,
- *     k: <Datakey>,
- *     b: <Basedonversion>,
- *     m: <Modifier>, // (Note: This should not be here, or at least should be overridden by the Session or something that the User cannot control)
- *     t: <Modificationtime>,
- *     o: <Operation>,
- *     u: <Update>,
+ *	   s: <Dataset>,
+ *	   k: <Datakey>,
+ *	   b: <Basedonversion>,
+ *	   m: <Modifier>, // (Note: This should not be here, or at least should be overridden by the Session or something that the User cannot control)
+ *	   t: <Modificationtime>,
+ *	   o: <Operation>,
+ *	   u: <Update>,
  * }
  * ```
  *
@@ -428,12 +431,12 @@ ReferenceServer.prototype._validate_queueitem = function(req) {
  * #### Parameters
  *
  * * **@param {Function} `listener`** Callback. Signature: `function (processedQueueitem, processedJrec)`.
- *   * **@param {Request} `listener.req`** An Express Request (first param of TestServer._setRemoveOrUpdate()).
- *   * **@param {Request} `listener.to`** The sequence within the Dataset.
- *   * **@param {String} `listener.dataset`** The dataset of the just fed Queueitem.
- *   * **@param {String} `listener.datakey`** The datakey of the just fed Queueitem.
- *   * **@param {Queueitem} `listener.processedQueueitem`** The Queueitem which has just been added
- *   * **@param {Storerecord} `listener.processedJrec`** The resulting data after the Queueitem has been applied
+ *	 * **@param {Request} `listener.req`** An Express Request (first param of TestServer._setRemoveOrUpdate()).
+ *	 * **@param {Request} `listener.to`** The sequence within the Dataset.
+ *	 * **@param {String} `listener.dataset`** The dataset of the just fed Queueitem.
+ *	 * **@param {String} `listener.datakey`** The datakey of the just fed Queueitem.
+ *	 * **@param {Queueitem} `listener.processedQueueitem`** The Queueitem which has just been added
+ *	 * **@param {Storerecord} `listener.processedJrec`** The resulting data after the Queueitem has been applied
  */
 ReferenceServer.prototype.listenForFed = function(listener) {
 	this.listen('fed',listener);
@@ -466,7 +469,6 @@ ReferenceServer.prototype.listen = function(event,listener) {
 };
 
 ReferenceServer.prototype.sync = function(req, res) {
-	"use strict";
 	
 	if (
 		(!req.query.hasOwnProperty('dataset')) ||
