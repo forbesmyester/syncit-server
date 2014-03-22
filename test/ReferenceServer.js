@@ -47,7 +47,8 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		getModifierFromRequestHackFunc,
 		new ServerImplementation(
 			new SyncIt_ServerPersist_MemoryAsync()
-		)
+		),
+        {send: function() {}}
 	);
 	
 	var emitCount = 0;
@@ -68,7 +69,7 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 			body:{ s:'xx', k:'yy', b:0, m:'aa', r:false, t:new Date().getTime(), u:{b:'c'}, o:'set' }
 		};
 		var test = function(status, data) {
-			expect(data.queueitem.m).to.equal('aa');
+			expect(data.change).to.equal('/syncit/change/xx/yy/1');
 			expect(['created', 'see_other'].indexOf(status)).to.be.greaterThan(-1);
 			if (status == 'created') {
 				createdCount++;
@@ -104,9 +105,7 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		};
 		var test = function(status, data) {
 			expect(['ok', 'see_other'].indexOf(status)).to.be.greaterThan(-1);
-			expect(data.queueitem.s).to.equal('xx');
-			expect(data.queueitem.k).to.equal('yy');
-			expect(data.queueitem.m).to.equal('aa');
+			expect(data.change).to.equal('/syncit/change/xx/yy/2');
 			if (status == 'ok') {
 				okCount++;
 			}
@@ -218,7 +217,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 			getModifierFromRequestHackFunc,
 			new ServerImplementation(
 				new SyncIt_ServerPersist_MemoryAsync()
-			)
+			),
+            { send: function() {} }
 		);
 		
 		var data1 = { body: {
@@ -270,7 +270,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 			getModifierFromRequestHackFunc,
 			new ServerImplementation(
 				new SyncIt_ServerPersist_MemoryAsync()
-			)
+			),
+            { send: function() {} }
 		);
 		
 		var data1 = { body: {
@@ -322,7 +323,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 			getModifierFromRequestHackFunc,
 			new ServerImplementation(
 				new SyncIt_ServerPersist_MemoryAsync()
-			)
+			),
+            { send: function() {} }
 		);
 		
 		var data1 = { body: {

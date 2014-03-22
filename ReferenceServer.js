@@ -189,8 +189,18 @@ ReferenceServer.prototype.push = function(req, responder) {
 	}
 	
 	this._inst.push(queueitem, function(status, data) {
+        
+        if (status === 'see_other') {
+            return responder(status, {
+                change: '/syncit/change/' +
+                    data.queueitem.s + '/' +
+                    data.queueitem.k + '/' + 
+                    (data.queueitem.b + 1)
+            });
+        };
+        
 		if (['ok', 'created'].indexOf(status) === -1) {
-			return responder(status, data);
+			return responder(status);
 		};
 		
 		this._emit(
@@ -204,7 +214,7 @@ ReferenceServer.prototype.push = function(req, responder) {
 		);
 		
 		this._sseCommunication.send(
-			req.params.deviceId,
+			this._getModifier(req),
 			data.queueitem.s,
 			'queueitem',
 			{
@@ -472,7 +482,7 @@ ReferenceServer.prototype.sync = function(req, res) {
 	});
 	
 	this._sseCommunication.register(
-		req.params.deviceId,
+		this._getModifier(req),
 		req.query.dataset,
 		res
 	);
