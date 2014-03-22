@@ -69,14 +69,16 @@ SyncIt_ServerPersist_MongoDb.prototype._find = function(collection, query, done)
  * 
  * #### Parameters
  * 
- * * **@param {Function} `done`** Signature: `function (err, datasetNames)`
+ * * **@param {Function} `done`** Signature: `function (err, status, datasetNames)`
  *   * **@param {Errorcode} `done.err`**
  *   * **@param {Array} `done.datasetNames`** The names of all Dataset
  */
 SyncIt_ServerPersist_MongoDb.prototype.getDatasetNames = function(done) {
 	this._find(this._sequenceCollection, {}, function(err, items) {
+		if (err) { return done(err); }
 		done(
 			err,
+			SyncIt_Constant.Error.OK,
 			items.map(function(rec) { return rec._id; })
 		);
 	});
@@ -103,8 +105,9 @@ SyncIt_ServerPersist_MongoDb.prototype._unserialize = function(rec) {
  * 
  * * **@param {String} `dataset`**
  * * **@param {Number|null} `fromSeqId`** Where to read Queueitem from (not inclusive).
- * * **@param {Function} `done`** Signature: `done(err, queueitems, lastQueueitemIdentifier)`
- *   * **@param {Number} `done.err`** See SyncIt_Constant.Error
+ * * **@param {Function} `done`** Signature: `done(err, status, queueitems, lastQueueitemIdentifier)`
+ *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Array} `done.queueitems`** An array of Queueitem
  *   * **@param {Object} `done.lastQueueitemIdentifier`** The internal reference of that last item, passing this to this function again will lead to continual reading.
  */
@@ -118,8 +121,10 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
 	}
 	
 	this._find( this._dataCollection, q, function(err, items) {
+		if (err) { return done(err); }
 		done(
 			err,
+			SyncIt_Constant.Error.OK,
 			items.map(function(rec) {
 				if (rec._id.n > maxId) {
 					maxId = rec._id.n;
@@ -140,8 +145,9 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
  * * **@param {String} `dataset`** The *Dataset* you want to download the update for
  * * **@param {String} `datakey`** The *Datakey* you want to download the update for
  * * **@param {Number} `version`** The *Version* of the update you want to get
- * * **@param {Function} `done`** Signature: `done(err, queueitems, lastQueueitemIdentifier)`
- *   * **@param {Number} `done.err`** See SyncIt_Constant.Error
+ * * **@param {Function} `done`** Signature: `done(err, status, queueitems, lastQueueitemIdentifier)`
+ *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Object} `responder.data`** The change
  */
 SyncIt_ServerPersist_MongoDb.prototype.getDatasetDatakeyVersion = function(dataset, datakey, version, done) {
@@ -150,10 +156,10 @@ SyncIt_ServerPersist_MongoDb.prototype.getDatasetDatakeyVersion = function(datas
 	
 	this._find( this._dataCollection, q, function(err, items) {
 		if (err) {
-			throw new Error("SyncIt: MongoDB: getDatasetDatakeyVersion:", err, q);
+			if (err) { return done(err); }
 		}
 		if (items === null) {
-			return done(SyncIt_Constant.Error.NO_DATA_FOUND);
+			return done(err, SyncIt_Constant.Error.NO_DATA_FOUND);
 		}
 		var i = items[0];
 		i.u = JSON.parse(i.u);
@@ -162,6 +168,7 @@ SyncIt_ServerPersist_MongoDb.prototype.getDatasetDatakeyVersion = function(datas
 		delete i.j.m;
 		done(
 			err,
+			SyncIt_Constant.Error.OK,
 			items[0]
 		);
 	}.bind(this));
@@ -180,17 +187,15 @@ SyncIt_ServerPersist_MongoDb.prototype._getLast = function(dataset, datakey, pro
 		projection,
 		{sort:[['b', -1]]},
 		function(err, result) {
-			if (err) {
-				throw new Error("SyncIt: MongoDB: _getLast:", err, dataset, datakey, projection);
-			}
+			if (err) { return done(err); }
 			if (
 				(result === null) ||
 				(Array.isArray(result) && (result.length === 0))
 			) {
-				return done(SyncIt_Constant.Error.NO_DATA_FOUND, result);
+				return done(err, SyncIt_Constant.Error.NO_DATA_FOUND, result);
 			}
 			result.s = result._id.s;
-			return done(SyncIt_Constant.Error.OK, this._unserialize(result));
+			return done(err, SyncIt_Constant.Error.OK, this._unserialize(result));
 		}.bind(this)
 	);
 };
@@ -202,8 +207,9 @@ SyncIt_ServerPersist_MongoDb.prototype._getLast = function(dataset, datakey, pro
  * 
  * * **@param {String} `dataset`**
  * * **@param {String} `datakey`**
- * * **@param {Function} `done`** Signature: `function (err, jrec)`
- *   * **@param {Number} `done.err`** See SyncIt_Constant.Error
+ * * **@param {Function} `done`** Signature: `function (err, status, jrec)`
+ *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Jrec} `done.jrec`** The result of all the Queueitem.
  */
 SyncIt_ServerPersist_MongoDb.prototype.getValue = function(dataset, datakey, done) {
@@ -217,7 +223,8 @@ SyncIt_ServerPersist_MongoDb.prototype.getValue = function(dataset, datakey, don
  * 
  * * **@param {Queueitem} `queueitem`**
  * * **@param {Function} `done`** Signature: `function (err, queueitem, jrec, seqId)`
- *   * **@param {Number} `done.err`** See SyncIt_Constant.Error
+ *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Queueitem} `done.queueitem`** The Queueitem passed in (successful or not)
  *   * **@param {Jrec} `done.jrec`** If successul, a Jrec, otherwise `undefined`
  *   * **@param {seqId} `done.seqId` The sequence within the dataset.
@@ -230,7 +237,9 @@ SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
 		queueitem.s,
 		queueitem.k,
 		{},
-		function(err, storedQueueitem) {
+		function(err, status, storedQueueitem) {
+			
+			if (err) { return done(err); }
 			
 			this._logger("SyncIt: MongoDB: Existing:", storedQueueitem);
 			
@@ -242,8 +251,8 @@ SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
 			
 			this._logger("SyncIt: MongoDB: Proposed:",result);
 			
-			if (result.err) {
-				return(done(result.err, result.resultingJrec));
+			if (result.status) {
+				return(done(err, result.status, result.resultingJrec));
 			}
 			getIncrementalNumber(
 				this._mongoskinConnection,
@@ -279,12 +288,13 @@ SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
 									mongoErr.hasOwnProperty('code') &&
 									mongoErr.code == 11000
 								) {
-									return done(SyncIt_Constant.Error.TRYING_TO_ADD_QUEUEITEM_BASED_ON_OLD_VERSION);
+									return done(null, SyncIt_Constant.Error.TRYING_TO_ADD_QUEUEITEM_BASED_ON_OLD_VERSION);
 								}
-								throw new Error("SyncIt: MongoDB: Insert:", mongoErr, toWrite);
+								return done(err);
 							}
 							
 							return done(
+								err,
 								SyncIt_Constant.Error.OK,
 								queueitem,
 								result.resultingJrec,

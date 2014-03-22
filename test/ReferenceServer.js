@@ -33,7 +33,8 @@ describe('When SyncItTestServ responds to a getDatasetNames request',function() 
 	);
 	
 	it('should respond with an empty object, when it is',function(done) {
-		syncItTestServer.getDatasetNames({},function(status,data) {
+		syncItTestServer.getDatasetNames({},function(e, status, data) {
+			expect(e).to.equal(null);
 			expect(status).to.eql('ok');
 			expect(data).to.eql({});
 			done();
@@ -68,7 +69,8 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		var req = {
 			body:{ s:'xx', k:'yy', b:0, m:'aa', r:false, t:new Date().getTime(), u:{b:'c'}, o:'set' }
 		};
-		var test = function(status, data) {
+		var test = function(e, status, data) {
+			expect(e).to.equal(null);
 			expect(data.change).to.equal('/syncit/change/xx/yy/1');
 			expect(['created', 'see_other'].indexOf(status)).to.be.greaterThan(-1);
 			if (status == 'created') {
@@ -76,9 +78,10 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 			}
 			syncItTestServer.getValue(
 				{ params:{s:'xx',k:'yy'}, body: { m: 'aa' } },
-				function(err,jrec) {
+				function(err,status,jrec) {
+					expect(err).to.equal(null);
 					expect(createdCount).to.equal(1);
-					expect(err).to.equal('ok');
+					expect(status).to.equal('ok');
 					expect(jrec.i).to.eql({b:'c'});
 					expect(jrec.m).to.equal('aa');
 					if (++testCount == 2) {
@@ -103,13 +106,15 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 			params:{s:'xx',k:'yy'},
 			body:{ s:'xx', k:'yy', b:1, m:'aa', r:false, t:new Date().getTime(), u:{c:'d'}, o:'set' }
 		};
-		var test = function(status, data) {
+		var test = function(e, status, data) {
+			expect(e).to.equal(null);
 			expect(['ok', 'see_other'].indexOf(status)).to.be.greaterThan(-1);
 			expect(data.change).to.equal('/syncit/change/xx/yy/2');
 			if (status == 'ok') {
 				okCount++;
 			}
-			syncItTestServer.getValue(req,function(err,jrec) {
+			syncItTestServer.getValue(req,function(e,s,jrec) {
+				expect(e).to.equal(null);
 				expect(jrec.m).to.equal('aa');
 				expect(jrec.i).to.eql({c:'d'});
 				if (++testCount == 2) {
@@ -126,8 +131,10 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		var req = {
 			body:{ s:'xx', k:'yy', b:1, m:'bb', r:false, t:new Date().getTime(), u:{c:'d'},o:'set' } // the time will be wrong
 		};
-		var test = function(status) {
-			syncItTestServer.getValue({params:{s:'xx',k:'yy'},body:{m:'bb'}},function(err,jrec) {
+		var test = function(e, status) {
+			expect(e).to.equal(null);
+			syncItTestServer.getValue({params:{s:'xx',k:'yy'},body:{m:'bb'}},function(e,s,jrec) {
+				expect(e).to.equal(null);
 				expect(status).to.equal('conflict');
 				expect(jrec.m).to.equal('aa');
 				expect(jrec.i).to.eql({c:'d'});
@@ -146,12 +153,13 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 			params:{s:'xx',k:'yy'},
 			body:{ s:'xx', k:'yy', b:2, m:'aa', r:false, t:new Date().getTime(), u:{t:'t'}, o:'remove' } // the time will be wrong
 		};
-		var test = function(status /*, data */) {
+		var test = function(e, status /*, data */) {
+			expect(e).to.equal(null);
 			expect(['ok', 'see_other'].indexOf(status)).to.be.greaterThan(-1);
 			if (status == 'ok') {
 				okCount++;
 			}
-			syncItTestServer.getValue(req,function(err,jrec) {
+			syncItTestServer.getValue(req,function(err,s,jrec) {
 				expect(okCount).to.equal(1);
 				expect(jrec.m).to.equal('aa');
 				expect(jrec.r).to.equal(true);
@@ -170,10 +178,11 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 			params:{s:'xx',k:'yy'},
 			body:{ s:'xx', k:'yy', b:3, m:'aa', r:false, t:new Date().getTime(), u:{t:'t'}, o:'set' } // the time will be wrong
 		};
-		var test = function(status /*, data */) {
+		var test = function(e, status /*, data */) {
+			expect(e).to.equal(null);
 			expect(status).to.equal('gone');
-			syncItTestServer.getValue(req,function(err) {
-				expect(err).to.equal('gone');
+			syncItTestServer.getValue(req,function(err,s) {
+				expect(s).to.equal('gone');
 				if (++testCount == 2) {
 					done();
 				}
@@ -192,7 +201,8 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 			params:{s:'xx',k:'yy'},
 			body:{ b:3, m:'aa', r:false, t:new Date().getTime(), u:{t:'t'}, o:'remove' } // the time will be wrong
 		};
-		var test = function(status /*, data */) {
+		var test = function(e, status /*, data */) {
+			expect(e).to.equal(null);
 			expect(status).to.equal('validation_error');
 			if (++testCount == 2) {
 				done();
@@ -211,7 +221,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 		return r;
 	};
 	
-	it('when there is a point to go from',function(done) {
+	it('when there is a point to go from (1)',function(done) {
 		
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
@@ -241,9 +251,11 @@ describe('SyncItTestServ can respond to data requests',function() {
 			u: {eyes: "Blue" }
 		} };
 		
-		syncItServ.PUT(data1, function(status /*, result */) {
+		syncItServ.PUT(data1, function(e, status /*, result */) {
+			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(data2, function(status /*, result */) {	
+			syncItServ.PATCH(data2, function(e, status /*, result */) {	
+				expect(e).to.equal(null);
 				expect(status).to.equal('ok');
 				syncItServ.getQueueitems(
 					{
@@ -251,7 +263,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 						body: {m: 'me'},
 						query: { seqId: 'usersA.me@1' }
 					},
-					function(status, data) {
+					function(err, status, data) {
+						expect(err).to.equal(null);
 						expect(status).to.equal('ok');
 						expect(data).to.eql({		   
 							queueitems: [ injectR(data2.body) ],
@@ -264,7 +277,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 		});
 	});
 	
-	it('when there is no point to go from',function(done) {
+	it('when there is no point to go from (2)',function(done) {
 		
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
@@ -294,13 +307,16 @@ describe('SyncItTestServ can respond to data requests',function() {
 			u: {eyes: "Blue" }
 		} };
 		
-		syncItServ.PUT(data1, function(status /*, result */) {
+		syncItServ.PUT(data1, function(e, status /*, result */) {
+			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(data2, function(status /*, result */) {	
+			syncItServ.PATCH(data2, function(e, status /*, result */) {	
+				expect(e).to.equal(null);
 				expect(status).to.equal('ok');				  
 				syncItServ.getQueueitems(
 					{ params: {s: 'usersB'}, body: {m: 'me'} },
-					function(status, data) {
+					function(e, status, data) {
+						expect(e).to.equal(null);
 						expect(status).to.equal('ok');
 						expect(data).to.eql({		   
 							queueitems: [
@@ -347,14 +363,16 @@ describe('SyncItTestServ can respond to data requests',function() {
 			u: {eyes: "Blue" }
 		} };
 		
-		syncItServ.PUT(data1, function(status /*, result */) {
+		syncItServ.PUT(data1, function(e, status /*, result */) {
+			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(data2, function(status /*, result */) {	
+			syncItServ.PATCH(data2, function(e, status /*, result */) {	
+				expect(e).to.equal(null);
 				expect(status).to.equal('ok');
-				
 				syncItServ.getDatasetDatakeyVersion(
 					{body: {s: 'usersB', k: 'me', v: 1, m: 'me'}},
-					function(status, data) {
+					function(e, status, data) {
+						expect(e).to.equal(null);
 						expect(status).to.equal('ok');
 						expect(data.u).to.eql({name: "Jack Smith" });
 						done();

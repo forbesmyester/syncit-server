@@ -39,13 +39,13 @@
 			// a duplicate.
 			if ((storedQueueitem.m == queueitem.m) && (storedQueueitem.b == queueitem.b)) {
 				return {
-					err: SyncIt_Constant.Error.TRYING_TO_ADD_ALREADY_ADDED_QUEUEITEM,
+					status: SyncIt_Constant.Error.TRYING_TO_ADD_ALREADY_ADDED_QUEUEITEM,
 					resultingJrec: queueitem
 				};
 			}
 			// otherwise send back just a normal version conflict error.
 			return {
-				err: SyncIt_Constant.Error.TRYING_TO_ADD_QUEUEITEM_BASED_ON_OLD_VERSION,
+				status: SyncIt_Constant.Error.TRYING_TO_ADD_QUEUEITEM_BASED_ON_OLD_VERSION,
 				resultingJrec: queueitem
 			};
 		}
@@ -53,7 +53,7 @@
 		// Check we are not adding a future version
 		if (queueitem.b > highestBasedOn + 1) {
 			return {
-				err: SyncIt_Constant.Error.TRYING_TO_ADD_FUTURE_QUEUEITEM,
+				status: SyncIt_Constant.Error.TRYING_TO_ADD_FUTURE_QUEUEITEM,
 				resultingJrec: queueitem
 			};
 		}
@@ -62,14 +62,14 @@
 		// the item will always stay removed.
 		if ((storedQueueitem !== null) && (storedQueueitem.o == 'remove')) {
 			return {
-				err: SyncIt_Constant.Error.DATA_ALREADY_REMOVED,
+				status: SyncIt_Constant.Error.DATA_ALREADY_REMOVED,
 				resultingJrec: queueitem
 			};
 		}
 		
 		// Calculate the result
 		return {
-			err: SyncIt_Constant.OK,
+			status: SyncIt_Constant.OK,
 			resultingJrec: updateResult(
 				(storedQueueitem === null) ? _getEmptyJrec() : storedQueueitem.j,
 				queueitem,
