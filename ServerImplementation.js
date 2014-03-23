@@ -190,7 +190,11 @@ TestServer.prototype.push = function(queueitem,responder) {
 			}
 			
 			if (status === SyncIt_Constant.Error.TRYING_TO_ADD_ALREADY_ADDED_QUEUEITEM) {
-				status = SyncIt_Constant.Error.OK;
+				return responder(
+					err,
+					'see_other',
+					{ seqId: createdId, queueitem: processedQueueitem }
+				);
 			}
 			
 			var checks = [
@@ -211,11 +215,11 @@ TestServer.prototype.push = function(queueitem,responder) {
 			}
 			
 			if (!emit) {
-				return responder(
-					err,
-					'see_other',
-					{ seqId: createdId, queueitem: processedQueueitem }
-				);
+				responder(err, 'STATUS: ' + status, { // will cause error futher down... good!
+					seqId: createdId,
+					queueitem: processedQueueitem,
+					jrec: processedJrec
+				});
 			}
 
 			return responder(
