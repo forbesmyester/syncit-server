@@ -44,6 +44,15 @@ var SyncIt_ServerPersist_MongoDb = function(cloneFunc, mongoskinConnection, sequ
 			}
 		}
 	);
+	this._mongoskinConnection.collection(dataCollection).ensureIndex(
+		{"_id.s": 1, k: 1, b: 1},
+		{unique: 1, sparse: false},
+		function(err,name) {
+			if (err) {
+				throw new Error("SyncIt: MongoDB: Index:", err, name);
+			}
+		}
+	);
 	this._mongoskinConnection.collection(sequenceCollection).ensureIndex(
 		{_id: 1, n: 1},
 		{unique: 1, sparse: false},
