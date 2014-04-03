@@ -79,7 +79,7 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
 	)) {
-		return responder(err, 'validation_error', null);
+		return responder(null, 'validation_error', null);
 	}
 	this._inst.getQueueitems(
 		reqInfo.s,
@@ -110,14 +110,14 @@ ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
 	)) {
-		return responder(err, 'validation_error', null);
+		return responder(null, 'validation_error', null);
 	}
 	if (!this._validateInputFieldAgainstRegexp(
 		'k',
 		SyncIt_Constant.Validation.DATAKEY_REGEXP,
 		reqInfo
 	)) {
-		return responder(err, 'validation_error', null);
+		return responder(null, 'validation_error', null);
 	}
 	this._inst.getDatasetDatakeyVersion(
 		reqInfo.s,
@@ -146,12 +146,12 @@ ReferenceServer.prototype.getValue = function(req, responder) {
 		's',
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
-	)) { return responder(err, 'validation_error',null); }
+	)) { return responder(null, 'validation_error',null); }
 	if (!this._validateInputFieldAgainstRegexp(
 		'k',
 		SyncIt_Constant.Validation.DATAKEY_REGEXP,
 		reqInfo
-	)) { return responder(err, 'validation_error',null); }
+	)) { return responder(null, 'validation_error',null); }
 	
 	this._inst.getValue(reqInfo.s, reqInfo.k, responder);
 };
@@ -175,17 +175,17 @@ ReferenceServer.prototype.getValue = function(req, responder) {
 ReferenceServer.prototype.push = function(req, responder) {
 
 	if (!this._validate_queueitem(req)) {
-		return responder(err, 'validation_error',null);
+		return responder(null, 'validation_error', null);
 	}
 	
 	var queueitem = this._extractInfoFromRequest(req);
 
 	if (!queueitem.hasOwnProperty('o')) {
-		return responder(err, 'validation_error');
+		return responder(null, 'validation_error');
 	}
 	
 	if (!queueitem.hasOwnProperty('b')) {
-		return responder(err, 'validation_error');
+		return responder(null, 'validation_error');
 	}
 	
 	this._inst.push(queueitem, function(err, status, data) {
