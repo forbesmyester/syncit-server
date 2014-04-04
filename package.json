@@ -1,6 +1,6 @@
 {
   "name": "syncit-server",
-  "version": "0.8.5",
+  "version": "0.8.6",
   "description": "A very modular reference server for SyncIt for use with Express",
   "author": "Matthew Forrester <syncit@keyboardwritescode.com>",
   "dependencies": {
