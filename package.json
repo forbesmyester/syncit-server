@@ -6,7 +6,7 @@
   "dependencies": {
     "add-events": "~0.9.2",
     "amdefine": "~0.1.0",
-    "sync-it": "~0.9.5",
+    "sync-it": "~0.9.10",
     "manip": "~0.9.3"
   },
   "devDependencies": {
