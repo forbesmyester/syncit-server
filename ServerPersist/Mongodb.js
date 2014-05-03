@@ -116,7 +116,10 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
 	var q = {s: dataset},
 		maxId = null;
 
-	if ((fromSeqId !== undefined) && (fromSeqId !== null)) {
+	if (
+		(typeof fromSeqId == 'string') &&
+		((fromSeqId.length == 12) || (fromSeqId == 24))
+	) {
 		q._id = {$gt: this._ObjectID.createFromHexString(fromSeqId)};
 		maxId = fromSeqId;
 	}
@@ -130,7 +133,6 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
 				if ((maxId === null) || (rec._id > maxId)) {
 					maxId = rec._id;
 				}
-				console.log('M: ', maxId, typeof maxId);
 				return this._unserialize(rec);
 			}.bind(this)),
 			maxId === null ? null : new this._ObjectID(maxId).toHexString()
