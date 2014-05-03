@@ -116,7 +116,10 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
 	var q = {s: dataset},
 		maxId = null;
 
-	if ((fromSeqId !== undefined) && (fromSeqId !== null)) {
+	if (
+		(typeof fromSeqId == 'string') &&
+		((fromSeqId.length == 12) || (fromSeqId == 24))
+	) {
 		q._id = {$gt: this._ObjectID.createFromHexString(fromSeqId)};
 		maxId = fromSeqId;
 	}
