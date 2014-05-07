@@ -7,17 +7,16 @@
 		module.exports = factory(
 			require('expect.js'),
 			require('../ReferenceServer.js'),
-			require('../ServerImplementation.js'),
 			require('../ServerPersist/MemoryAsync.js')
 		);
 	} else {
 		// AMD. Register as an anonymous module.
 		define(
-			['../ReferenceServer','../ServerImplementation.js','../ServerPersist/MemoryAsync'],
+			['../ReferenceServer','../ServerPersist/MemoryAsync'],
 			factory.bind(this, expect)
 		);
 	}
-})(this, function (expect, ReferenceServer, ServerImplementation, SyncIt_ServerPersist_MemoryAsync) {
+})(this, function (expect, ReferenceServer, SyncIt_ServerPersist_MemoryAsync) {
 "use strict";
 var getModifierFromRequestHackFunc = function(req) {
 	return req.body.m;
@@ -27,9 +26,7 @@ describe('When SyncItTestServ responds to a getDatasetNames request',function() 
 	
 	var syncItTestServer = new ReferenceServer(
 		getModifierFromRequestHackFunc,
-		new ServerImplementation(
-			new SyncIt_ServerPersist_MemoryAsync()
-		)
+		new SyncIt_ServerPersist_MemoryAsync()
 	);
 	
 	it('should respond with an empty object, when it is',function(done) {
@@ -46,9 +43,7 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 	
 	var syncItTestServer = new ReferenceServer(
 		getModifierFromRequestHackFunc,
-		new ServerImplementation(
-			new SyncIt_ServerPersist_MemoryAsync()
-		),
+		new SyncIt_ServerPersist_MemoryAsync(),
 		{send: function() {}}
 	);
 	
@@ -191,7 +186,7 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		syncItTestServer.PUT(req,  test );
 		syncItTestServer.PUT(req,  test );
 	});
-	it('will respond with validation error if using the wrong method',function(done) {
+	it('will respond with bad_request if using the wrong method',function(done) {
 		var testCount = 0;
 		var req1 = {
 			params:{s:'xx',k:'yy'},
@@ -203,7 +198,7 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 		};
 		var test = function(e, status /*, data */) {
 			expect(e).to.equal(null);
-			expect(status).to.equal('validation_error');
+			expect(status).to.equal('bad_request');
 			if (++testCount == 2) {
 				done();
 			}
@@ -225,9 +220,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 		
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
-			new ServerImplementation(
-				new SyncIt_ServerPersist_MemoryAsync()
-			),
+			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
 		
@@ -281,9 +274,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 		
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
-			new ServerImplementation(
-				new SyncIt_ServerPersist_MemoryAsync()
-			),
+			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
 		
@@ -337,9 +328,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 	
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
-			new ServerImplementation(
-				new SyncIt_ServerPersist_MemoryAsync()
-			),
+			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
 		

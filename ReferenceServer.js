@@ -19,12 +19,18 @@
 // Copyright: 2013 Matthew Forrester
 // License: MIT/BSD-style
 
+/**
+ * ## ReferenceServer
+ *
+ * This class will wraps ServerImplementation as an interface between it's API and Express.JS's Request / Response callbacks. It also handles some of the basic validation.
+ */
+
 "use strict";
 
 var queueitemProperties = ['s','k','b','m','t','u','o'];
 
 /**
- * ### new TestServer()
+ * ### new ReferenceServer()
  * 
  * Constructor
  * 
@@ -43,7 +49,7 @@ var ReferenceServer = function(extractModifierFromRequestFunc, serverImplementat
 };
 
 /**
- * ### TestServer.getDatasetNames()
+ * ### ReferenceServer.getDatasetNames()
  * 
  * Retrieves a list of *Dataset* names.
  *
@@ -55,7 +61,10 @@ var ReferenceServer = function(extractModifierFromRequestFunc, serverImplementat
  *	 * **@param {Array} `responder.data`** An Array of *Dataset* names
  */
 ReferenceServer.prototype.getDatasetNames = function(req, responder) {
-	this._inst.getDatasetNames(responder);
+	this._inst.getDatasetNames(function(mErr, status, names) {
+		if (mErr) { return responder(mErr); }
+		responder(mErr, 'ok', names);
+	});
 };
 
 /**
@@ -69,7 +78,7 @@ ReferenceServer.prototype.getDatasetNames = function(req, responder) {
  *	 * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
  *	 * **@param {String} `req.(param|query|body).seqId`** OPTIONAL: The last known Id for a Queueitem, if supplied all items from, but not including that Queueitem will be downloaded.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
- *	 * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {String} `responder.statusString`** 'bad_request' if no dataset supplied, 'ok' otherwise.
  *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 ReferenceServer.prototype.getQueueitems = function(req, responder) {
@@ -79,12 +88,15 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
 	)) {
-		return responder(null, 'validation_error', null);
+		return responder(null, 'bad_request', null);
 	}
 	this._inst.getQueueitems(
 		reqInfo.s,
 		reqInfo.hasOwnProperty('seqId') ? reqInfo.seqId : null,
-		responder
+		function(err, status, queueitems, toSeqId) {
+			if (err) { return responder(err); }
+			return responder(err, 'ok',{ queueitems: queueitems, seqId: toSeqId});
+		}
 	);
 };
 
@@ -100,7 +112,7 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
  *	 * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to download updates from
  *	 * **@param {String} `req.(param|query|body).v`** OPTIONAL: The version of the change you want to get.
  * * **@param {Function} `responder`** Callback. Signature: `function (err, statusString, data)`
- *	 * **@param {String} `responder.statusString`** 'validation_error' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {String} `responder.statusString`** 'bad_request' if no dataset supplied, 'ok' otherwise.
  *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
@@ -110,20 +122,26 @@ ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
 	)) {
-		return responder(null, 'validation_error', null);
+		return responder(null, 'bad_request', null);
 	}
 	if (!this._validateInputFieldAgainstRegexp(
 		'k',
 		SyncIt_Constant.Validation.DATAKEY_REGEXP,
 		reqInfo
 	)) {
-		return responder(null, 'validation_error', null);
+		return responder(null, 'bad_request', null);
 	}
 	this._inst.getDatasetDatakeyVersion(
 		reqInfo.s,
 		reqInfo.k,
 		reqInfo.hasOwnProperty('v') ? reqInfo.v : null,
-		responder
+		function(err, status, atVersion) {
+			if (err) { throw err; }
+			if (err === SyncIt_Constant.Error.NO_DATA_FOUND) {
+				return responder(err, 'not_found', null);
+			}
+			return responder(err, 'ok', atVersion);
+		}
 	);
 };
 
@@ -136,7 +154,7 @@ ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
  *	 * **@param {String} `req.(param|query|body).k`** REQUIRED: The *Datakey* you want to get the value from.
  *	 * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to get the value from.
  * * **@param {Function} `responder`** Callback. Signature: `function (err, statusString, data)`
- *	 * **@param {String} `responder.statusString`** `validation_error` if not given a valid looking Dataset and Datakey. `not_found` If the Dataset and Datakey has no records. `gone` If there was data, but it has been deleted. `ok` should data be found.
+ *	 * **@param {String} `responder.statusString`** `bad_request` if not given a valid looking Dataset and Datakey. `not_found` If the Dataset and Datakey has no records. `gone` If there was data, but it has been deleted. `ok` should data be found.
  *	 * **@param {Object} `responder.data`** The Jrec stored at that location.
  */
 ReferenceServer.prototype.getValue = function(req, responder) {
@@ -146,20 +164,31 @@ ReferenceServer.prototype.getValue = function(req, responder) {
 		's',
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
-	)) { return responder(null, 'validation_error',null); }
+	)) { return responder(null, 'bad_request',null); }
 	if (!this._validateInputFieldAgainstRegexp(
 		'k',
 		SyncIt_Constant.Validation.DATAKEY_REGEXP,
 		reqInfo
-	)) { return responder(null, 'validation_error',null); }
+	)) { return responder(null, 'bad_request',null); }
 	
-	this._inst.getValue(reqInfo.s, reqInfo.k, responder);
+	this._inst.getValue(reqInfo.s, reqInfo.k,
+		function(err, status, jrec) {
+			if (err) { return responder(err); }
+			if (status === SyncIt_Constant.Error.NO_DATA_FOUND) {
+				return responder(err,'not_found',null);
+			}
+			if (jrec.r) {
+				return responder(err,'gone',jrec);
+			}
+			return responder(err,'ok',jrec);
+		}
+	);
 };
 
 /**
- * ### TestServer._setRemoveOrUpdate()
+ * ### ReferenceServer._setRemoveOrUpdate()
  * 
- * TestServer.PATCH(), TestServer.PUT() and TestServer.DELETE() really all do 
+ * ReferenceServer.PATCH(), TestServer.PUT() and TestServer.DELETE() really all do 
  * the same thing, that being to put a Queueitem on the Queue and then calculate
  * the result of that operation. Therefore all the functions wrap this general
  * purpose function.
@@ -167,7 +196,7 @@ ReferenceServer.prototype.getValue = function(req, responder) {
  * * **@param {Request} `req`** A Express like Request Object
  *	 * **@param {Object} `req.(param|query|body)`** Should look like a Queueitem.
  * * **@param {Function} `responder`** Callback. Signature: `function (err, statusString, data)`
- *	 * **@param {String} `responder.statusString`** Quite a set... `validation_error` || `service_unavailable` || `conflict` || `out_of_date` || `gone` || `created` || `ok`
+ *	 * **@param {String} `responder.statusString`** Quite a set... `bad_request` || `service_unavailable` || `conflict` || `out_of_date` || `gone` || `created` || `ok`
  *	 * **@param {Object} `responder.data`**
  *	 * **@param {String} `responder.data.seqId`** The update number within the Dataset
  *	 * **@param {Queueitem} `responder.data.queueitem`** The Queueitem which has just been added
@@ -175,67 +204,88 @@ ReferenceServer.prototype.getValue = function(req, responder) {
 ReferenceServer.prototype.push = function(req, responder) {
 
 	if (!this._validate_queueitem(req)) {
-		return responder(null, 'validation_error', null);
+		return responder(null, 'bad_request', null);
 	}
 	
 	var queueitem = this._extractInfoFromRequest(req);
 
 	if (!queueitem.hasOwnProperty('o')) {
-		return responder(null, 'validation_error');
+		return responder(null, 'bad_request');
 	}
 	
 	if (!queueitem.hasOwnProperty('b')) {
-		return responder(null, 'validation_error');
+		return responder(null, 'bad_request');
 	}
 	
-	this._inst.push(queueitem, function(err, status, data) {
-		
+	var getHttpStatus = function(syncItStatus) {
+		switch (syncItStatus) {
+			case SyncIt_Constant.Error.UNABLE_TO_PROCESS_BECAUSE_LOCKED:
+				return 'service_unavailable';
+			case SyncIt_Constant.Error.TRYING_TO_ADD_FUTURE_QUEUEITEM:
+				return 'precondition_failed';
+			case SyncIt_Constant.Error.OK:
+				throw "ServerImplementation.unexpectedError: Unexpected error code " + syncItStatus;
+			case SyncIt_Constant.Error.TRYING_TO_ADD_QUEUEITEM_BASED_ON_OLD_VERSION:
+				return 'conflict';
+			case SyncIt_Constant.Error.DATA_ALREADY_REMOVED:
+				return 'gone';
+		}
+		return 'ok';
+	};
+	
+	this._inst.push(queueitem, function(err, status, processedQueueitem, processedJrec, createdId) {
+
 		if (err) { return responder(err); }
 		
-		if (status === 'see_other') {
-			if (data.hasOwnProperty('queueitem')) {
-				return responder(err, status, {
+		if (status === SyncIt_Constant.Error.TRYING_TO_ADD_ALREADY_ADDED_QUEUEITEM) {
+			return responder(
+				err,
+				'see_other',
+				{
 					change: '/syncit/change/' +
-						data.queueitem.s + '/' +
-						data.queueitem.k + '/' +
-						(data.queueitem.b + 1)
-				});
-			}
-			return responder(err, status);
+						processedQueueitem.s + '/' +
+						processedQueueitem.k + '/' +
+						( processedQueueitem.b + 1 )
+				}
+			);
 		}
 		
-		if (['ok', 'created'].indexOf(status) === -1) {
-			return responder(err, status);
+		if (status !== SyncIt_Constant.Error.OK) {
+			return responder(err, getHttpStatus(status), null);
 		}
-		
+
 		this._emit(
 			'fed',
 			req,
-			data.seqId,
-			data.queueitem.s,
-			data.queueitem.k,
-			data.queueitem,
-			data.jrec
+			createdId,
+			processedQueueitem.s,
+			processedQueueitem.k,
+			processedQueueitem,
+			processedJrec
 		);
 		
 		this._sseCommunication.send(
 			this._getModifier(req),
-			data.queueitem.s,
+			processedQueueitem.s,
 			'queueitem',
 			{
-				queueitem: data.queueitem,
-				seqId: data.seqId
+				queueitem: processedQueueitem,
+				seqId: processedJrec
 			}
 		);
 		
-		responder(err, status, {
-			sequence: '/syncit/sequence/' + 
-				data.queueitem.s + '/' + data.seqId,
-			change: '/syncit/change/' +
-				data.queueitem.s + '/' +
-				data.queueitem.k + '/' + 
-				(data.queueitem.b + 1)
-		});
+		responder(
+			err,
+			queueitem.b === 0 ? 'created' : 'ok',
+			{
+				sequence: '/syncit/sequence/' + 
+					processedQueueitem.s + '/' + processedJrec,
+				change: '/syncit/change/' +
+					processedQueueitem.s + '/' +
+					processedQueueitem.k + '/' + 
+					(processedQueueitem.b + 1)
+			}
+		);
 		
 	}.bind(this));
 	
@@ -249,11 +299,12 @@ ReferenceServer.prototype.push = function(req, responder) {
  */
 ReferenceServer.prototype.PUT = function(req,responder) {
 	if (this._extractInfoFromRequest(req).o !== 'set') {
-		return responder(null, 'validation_error');
+		return responder(null, 'bad_request');
 	}
 	this.push(req,responder);
 
 };
+
 /**
  * ### ReferenceServer.PATCH()
  *
@@ -261,10 +312,11 @@ ReferenceServer.prototype.PUT = function(req,responder) {
  */
 ReferenceServer.prototype.PATCH = function(req,responder) {
 	if (this._extractInfoFromRequest(req).o !== 'update') {
-		return responder(null, 'validation_error');
+		return responder(null, 'bad_request');
 	}
 	this.push(req,responder);
 };
+
 /**
  * ### ReferenceServer.DELETE()
  *
@@ -272,14 +324,13 @@ ReferenceServer.prototype.PATCH = function(req,responder) {
  */
 ReferenceServer.prototype.DELETE = function(req,responder) {
 	if (this._extractInfoFromRequest(req).o !== 'remove') {
-		return responder(null, 'validation_error');
+		return responder(null, 'bad_request');
 	}
 	this.push(req,responder);
 };
 
-
 /**
- * ### TestServer._extractInfoFromRequest()
+ * ### ReferenceServer._extractInfoFromRequest()
  * 
  * Extracts Queueitem information and any extra from an express `req`.
  * 
@@ -367,7 +418,7 @@ ReferenceServer.prototype._extractInfoFromRequest = function(req, extras) {
  *
  * * **@param {String} `field`** The field you are checking.
  * * **@param {Regexp} `regexp`** The RegExp you are checking the field against.
- * * **@param {Request} `reqInfo`** Information extract from an express `req` via TestServer._extractInfoFromRequest()
+ * * **@param {Request} `reqInfo`** Information extract from an express `req` via ReferenceServer._extractInfoFromRequest()
  * * **@return {Boolean}** `true` if the input is OK.
  */
 ReferenceServer.prototype._validateInputFieldAgainstRegexp = function(field,regexp,reqInfo) {
@@ -426,14 +477,14 @@ ReferenceServer.prototype._validate_queueitem = function(req) {
 
 
 /**
- * ### TestServer.listenForFed()
+ * ### ReferenceServer.listenForFed()
  * 
  * Listen for data changes.
  *
  * #### Parameters
  *
  * * **@param {Function} `listener`** Callback. Signature: `function (processedQueueitem, processedJrec)`.
- *	 * **@param {Request} `listener.req`** An Express Request (first param of TestServer._setRemoveOrUpdate()).
+ *	 * **@param {Request} `listener.req`** An Express Request (first param of ReferenceServer._setRemoveOrUpdate()).
  *	 * **@param {Request} `listener.to`** The sequence within the Dataset.
  *	 * **@param {String} `listener.dataset`** The dataset of the just fed Queueitem.
  *	 * **@param {String} `listener.datakey`** The datakey of the just fed Queueitem.
@@ -444,9 +495,9 @@ ReferenceServer.prototype.listenForFed = function(listener) {
 	this.listen('fed',listener);
 };
 /**
- * ### TestServer.listen()
+ * ### ReferenceServer.listen()
  *
- * See [TestServer.listenForFed()](#testserver.listenforfed--), as that is the only supported event.
+ * See [ReferenceServer.listenForFed()](#testserver.listenforfed--), as that is the only supported event.
  *
  * #### Parameters
  *

@@ -1,4 +1,7 @@
-syncit-server
-=============
+# syncit-server
 
-A very modular reference server for SyncIt for use with Express
+Basic Server for SyncIt using MongoDB / Mongoskin (or Memory) and designed to be embedded into Node.JS's Express.
+
+## Usage
+
+For usage please see the SyncItTodoMvc project.
