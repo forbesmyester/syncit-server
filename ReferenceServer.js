@@ -219,8 +219,6 @@ ReferenceServer.prototype.push = function(req, responder) {
 	
 	var getHttpStatus = function(syncItStatus) {
 		switch (syncItStatus) {
-			case SyncIt_Constant.Error.UNABLE_TO_PROCESS_BECAUSE_LOCKED:
-				return 'service_unavailable';
 			case SyncIt_Constant.Error.TRYING_TO_ADD_FUTURE_QUEUEITEM:
 				return 'precondition_failed';
 			case SyncIt_Constant.Error.OK:
@@ -233,7 +231,7 @@ ReferenceServer.prototype.push = function(req, responder) {
 		return 'ok';
 	};
 	
-	this._inst.push(queueitem, function(err, status, processedQueueitem, processedJrec, createdId) {
+	this._inst.push(queueitem, function(err, status, processedQueueitem, processedJrec, seqId) {
 
 		if (err) { return responder(err); }
 		
@@ -257,7 +255,7 @@ ReferenceServer.prototype.push = function(req, responder) {
 		this._emit(
 			'fed',
 			req,
-			createdId,
+			seqId,
 			processedQueueitem.s,
 			processedQueueitem.k,
 			processedQueueitem,
@@ -270,7 +268,7 @@ ReferenceServer.prototype.push = function(req, responder) {
 			'queueitem',
 			{
 				queueitem: processedQueueitem,
-				seqId: processedJrec
+				seqId: seqId
 			}
 		);
 		
@@ -279,7 +277,7 @@ ReferenceServer.prototype.push = function(req, responder) {
 			queueitem.b === 0 ? 'created' : 'ok',
 			{
 				sequence: '/syncit/sequence/' + 
-					processedQueueitem.s + '/' + processedJrec,
+					processedQueueitem.s + '/' + seqId,
 				change: '/syncit/change/' +
 					processedQueueitem.s + '/' +
 					processedQueueitem.k + '/' + 
