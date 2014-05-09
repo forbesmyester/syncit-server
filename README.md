@@ -112,13 +112,13 @@ Being able to get changes, by itself will serve no purpose should changes to be 
 
 This will respond with one of the following HTTP Status codes:
 
-	* 200 OK - When an Queueitem has been added to a Dataset / Datakey which already existed.
-	* 201 Created - Queueitem added to the Dataset / Datakey which did not already exist.
-	* 400 Bad Request - The URL or data provided is not valid.
-	* 301 See Other - The Modifier (deviceId) has already added data for that Dataset / Datakey / Version (b).
-	* 412 Precondition Failed - The "b" field (version) is higher than what is expected.
-	* 409 Conflict - There already exists data for the supplied Dataset / Datakey / Version (and that deviceId (m) did not add it.
-	* 410 Gone - All given data is valid however the Queueitem already has been removed (the "r" flag).
+  * 200 OK - When an Queueitem has been added to a Dataset / Datakey which already existed.
+  * 201 Created - Queueitem added to the Dataset / Datakey which did not already exist.
+  * 400 Bad Request - The URL or data provided is not valid.
+  * 301 See Other - The Modifier (deviceId) has already added data for that Dataset / Datakey / Version (b).
+  * 412 Precondition Failed - The "b" field (version) is higher than what is expected.
+  * 409 Conflict - There already exists data for the supplied Dataset / Datakey / Version (and that deviceId (m) did not add it.
+  * 410 Gone - All given data is valid however the Queueitem already has been removed (the "r" flag).
 
 The data returned within the body of this request will look something like the following:
 
