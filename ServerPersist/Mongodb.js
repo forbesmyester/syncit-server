@@ -52,7 +52,7 @@ var SyncIt_ServerPersist_MongoDb = function(cloneFunc, mongoskinConnection, Obje
 };
 
 SyncIt_ServerPersist_MongoDb.prototype._find = function(collection, query, done) {
-	this._mongoskinConnection.collection(collection).find(query).toArray(function(err, items) {
+	this._mongoskinConnection.collection(collection).find(query).sort({_id: 1}).toArray(function(err, items) {
 		if (err) {
 			throw new Error("SyncIt: MongoDB: _find:", err, collection, query);
 		}
