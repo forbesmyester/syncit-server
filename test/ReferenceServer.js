@@ -372,6 +372,139 @@ describe('SyncItTestServ can respond to data requests',function() {
 		});
 	
 	});
+
+	var getMultiTestData = function() {
+		return [
+			{ body: {
+				s: 'usersA',
+				k: 'me',
+				b: 0,
+				m: 'me',
+				t: 99,
+				o: 'set',
+				u: {name: "Jack Smith" }
+			} },
+			{ body: {
+				s: 'usersA',
+				k: 'me',
+				b: 1,
+				m: 'me',
+				t: 99,
+				o: 'update',
+				u: {eyes: "Blue" }
+			} },
+			{ body: {
+				s: 'usersB',
+				k: 'other',
+				b: 0,
+				m: 'me',
+				t: 99,
+				o: 'set',
+				u: {eyes: "Blue" }
+			} },
+			{ body: {
+				s: 'usersA',
+				k: 'hair',
+				b: 0,
+				m: 'me',
+				t: 99,
+				o: 'update',
+				u: {hair: "Brown" }
+			} },
+		];
+	};
+	
+	var getMultiQueueitemsTest = function(input, expected, done) {
+		
+		var testData = getMultiTestData();
+
+		var syncItServ = new ReferenceServer(
+			getModifierFromRequestHackFunc,
+			new SyncIt_ServerPersist_MemoryAsync(),
+			{ send: function() {} }
+		);
+		
+		var doTest = function() {
+			syncItServ.getMultiQueueitems(
+				{body: input},
+				function(e, status, data) {
+					expect(e).to.equal(null);
+					expect(status).to.equal('ok');
+					expect(data).to.eql(expected);
+					done();
+				}
+			);
+		};
+		
+		syncItServ.PUT(testData[0], function(e, status /*, result */) {
+			expect(e).to.equal(null);
+			expect(status).to.equal('created');
+			syncItServ.PATCH(testData[1], function(e, status /*, result */) {	
+				expect(e).to.equal(null);
+				expect(status).to.equal('ok');
+				syncItServ.PUT(testData[2], function(e, status /*, result */) {	
+					expect(e).to.equal(null);
+					expect(status).to.equal('created');
+					syncItServ.push(testData[3], function(e, status /*, result */) {	
+						expect(e).to.equal(null);
+						expect(status).to.equal('created');
+						doTest();
+					});
+				});
+			});
+		});
+	};
+
+	it('getMultiQueueitems will give sensible feedback when given no query', function(done) {
+		getMultiQueueitemsTest({}, {}, done);
+	});
+	
+	it('getMultiQueueitems will give sensible feedback when given an empty query', function(done) {
+		getMultiQueueitemsTest({q: []}, {}, done);
+	});
+	
+	it('getMultiQueueitems will give sensible feedback when a non matching query given', function(done) {
+		getMultiQueueitemsTest({q: [{s: 'xxx'}]}, {xxx: {queueitems: [], seqId: null}}, done);
+	});
+	
+	it('getMultiQueueitems give sensible back when a single dataset query given', function(done) {
+		getMultiQueueitemsTest(
+			{q: [{s: 'usersA'}]},
+			{		   
+				usersA: {
+					queueitems: [
+						injectR(getMultiTestData()[0].body),
+						injectR(getMultiTestData()[1].body),
+						injectR(getMultiTestData()[3].body)
+					],
+					seqId: "usersA.hair@1"
+				}
+			},
+			done
+		);
+	});
+	
+	it('getMultiQueueitems will give sensible feedback when a multiple matching query given', function(done) {
+		getMultiQueueitemsTest(
+			{q: [{s: 'usersA', seqId: 'usersA.me@1' }, {s: 'usersB'}]},
+			{		   
+				usersA: {
+					queueitems: [
+						injectR(getMultiTestData()[1].body),
+						injectR(getMultiTestData()[3].body)
+					],
+					seqId: "usersA.hair@1"
+				},
+				usersB: {
+					queueitems: [
+						injectR(getMultiTestData()[2].body)
+					],
+					seqId: "usersB.other@1"
+				}
+			},
+			done
+		);
+	});
 	
 	
 });

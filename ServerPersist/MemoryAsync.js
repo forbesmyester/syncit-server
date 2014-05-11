@@ -198,7 +198,7 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset, fro
 		var r = [],
 			l = 0,
 			i = 0,
-			lastId = null,
+			lastId = fromSeqId,
 			foundFirst = (
 					(fromSeqId === null) ||
 					(fromSeqId === undefined) ||
@@ -221,8 +221,14 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset, fro
 					t: this._d[i].t
 				});
 			}
-			lastId = getSeqIdFromQueueitem(this._d[i]);
-			if (lastId == fromSeqId) {
+			if (
+				(this._d[i].s == dataset) &&
+				(
+					(fromSeqId == getSeqIdFromQueueitem(this._d[i])) ||
+					foundFirst
+				)
+			) {
+				lastId = getSeqIdFromQueueitem(this._d[i]);
 				foundFirst = true;
 			}
 		}

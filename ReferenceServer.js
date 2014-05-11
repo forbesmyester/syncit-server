@@ -101,6 +101,57 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
 };
 
 /**
+ * ### ReferenceServer.getMultiQueueitems() {
+ *
+ * Is a multi Dataset version of `ReferenceServer.getQueueitems()`.
+ *
+ * #### Parameters
+ *
+ * * **@param {Request} `req`** A Express like Request Object
+ *	 * **@param {Array} `req.(param|query|body).q`** Query: An array of sub queries turn
+ *	 * **@param {Object} `req.(param|query|body).q.<n> The sub queries themselves.
+ *	 * **@param {String} `req.(param|query|body).q.<n>.s REQUIRED: The *Dataset* you want to download updates from.
+ *	 * **@param {String} `req.(param|query|body).q.<n>.seqId OPTIONAL: The last known Id for a Queueitem, if supplied all items from, but not including that Queueitem will be downloaded.
+ * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
+ *	 * **@param {String} `responder.statusString`** 'bad_request' if no dataset supplied, 'ok' otherwise.
+ *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
+ */
+ReferenceServer.prototype.getMultiQueueitems = function(req, responder) {
+	var reqInfo = this._extractInfoFromRequest(req, ['q']),
+		returned = 0,
+		dataSoFar = {},
+		errored = false,
+		i, length;
+
+	if ((!reqInfo.hasOwnProperty('q') || !reqInfo.q.length)) {
+		return responder(null, 'ok', {});
+	}
+
+	length = reqInfo.q.length;
+
+	var processed = function(dataset, err, status, data) {
+
+		if (errored) { return; }
+		if (err) { errored = true; return responder(err); }
+		if (status != 'ok') { errored = true; return responder(err, status); }
+
+		dataSoFar[dataset] = data;
+		
+		if (++returned == length) {
+			return responder(null, 'ok', dataSoFar);
+		}
+	};
+	
+	for (i=0; i<length; i++) {
+		if (!reqInfo.q[i].hasOwnProperty('s')) {
+			processed(null, 'ok', {});
+			continue;
+		}
+		this.getQueueitems({body: reqInfo.q[i]}, processed.bind(this, reqInfo.q[i].s));
+	}
+
+};
+/**
  * ### ReferenceServer.getDatasetDatakeyVersion()
  * 
  * Retrieves a list of Queueitem from a previously known one.

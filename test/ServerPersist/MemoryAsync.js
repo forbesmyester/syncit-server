@@ -208,7 +208,7 @@
 			});
 			
 		});
-		
+
 		describe('when getting stored values',function() {
 			
 			it('will retrieve with OK if found',function(done) {
@@ -293,6 +293,20 @@
 				);
 			});
 			
+			it('will only update seqId when it finds something in the dataset', function(done) {
+				sPMA.getQueueitems(
+					'hovercrafts',
+					'xxx',
+					function(err, status, queueitems, lastId) {
+						expect(err).to.equal(null);
+						expect(status).to.equal(SyncIt_Constant.Error.OK);
+						expect(queueitems.length).to.equal(0);
+						expect(lastId).to.equal('xxx');
+						done();
+					}
+				);
+			});
+		
 		});
 		
 		it('can list datasets',function(done) {
