@@ -129,21 +129,9 @@ The data returned within the body of this request will look something like the f
 
 This data gives you the path portions of two URL's. The "change" is the change you just uploaded. The "sequence" is a URL which you can use to get all changes posted __after__ this one, it does not include this change itself.
 
-### Integration with the rest of your system.
+### Notify your App of when SyncIt data changes.
 
-ReferenceServer also will expose an event which allows you to get notification of when data has been added. It is used like this:
-
-	referenceServer.listenForFed(
-		function(seqId, dataset, datakey, processedQueueitem, processedJrec) {
-			console.log(
-				"A change has been added to " + dataset + "." + datakey + " which is " +
-				"sequenceId " + sequenceId + ".\n\n" +
-				"The update was " + JSON.stringify(processedQueueitem) + " and it " +
-				"resulted in the the following data being stored:\n\n" +
-				JSON.stringify(processedJrec)
-			);
-		}
-	);
+SyncIt Server will fire an event when it has accepted new data. See the referenceServer.listenForFed() method documented below.
 
 ## Usage
 
@@ -219,7 +207,7 @@ ReferenceServer does not actually respond with HTTP Status codes, but with strin
 		);
 	};
 
-## Set up the URL's
+### Set up the URL's
 
 	app.get('/syncit/sequence/:s/:seqId', getQueueitemSequence);
 	app.get('/syncit/sequence/:s', getQueueitemSequence);
@@ -244,4 +232,20 @@ ReferenceServer does not actually respond with HTTP Status codes, but with strin
 			res.json(getStatusCode(status), data);
 		});
 	});
+
+### Integration with the rest of your system.
+
+ReferenceServer also will expose an event which allows you to get notification of when data has been added. It is used like this:
+
+	referenceServer.listenForFed(
+		function(seqId, dataset, datakey, processedQueueitem, processedJrec) {
+			console.log(
+				"A change has been added to " + dataset + "." + datakey + " which is " +
+				"sequenceId " + sequenceId + ".\n\n" +
+				"The update was " + JSON.stringify(processedQueueitem) + " and it " +
+				"resulted in the the following data being stored:\n\n" +
+				JSON.stringify(processedJrec)
+			);
+		}
+	);
 
