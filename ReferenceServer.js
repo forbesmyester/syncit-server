@@ -305,7 +305,6 @@ ReferenceServer.prototype.push = function(req, responder) {
 
 		this._emit(
 			'fed',
-			req,
 			seqId,
 			processedQueueitem.s,
 			processedQueueitem.k,
@@ -532,9 +531,8 @@ ReferenceServer.prototype._validate_queueitem = function(req) {
  *
  * #### Parameters
  *
- * * **@param {Function} `listener`** Callback. Signature: `function (processedQueueitem, processedJrec)`.
- *	 * **@param {Request} `listener.req`** An Express Request (first param of ReferenceServer._setRemoveOrUpdate()).
- *	 * **@param {Request} `listener.to`** The sequence within the Dataset.
+ * * **@param {Function} `listener`** Callback. Signature: `function (seqId, dataset, datakey, processedQueueitem, processedJrec)`.
+ *	 * **@param {Request} `listener.seqId`** The sequence Id within the Dataset.
  *	 * **@param {String} `listener.dataset`** The dataset of the just fed Queueitem.
  *	 * **@param {String} `listener.datakey`** The datakey of the just fed Queueitem.
  *	 * **@param {Queueitem} `listener.processedQueueitem`** The Queueitem which has just been added

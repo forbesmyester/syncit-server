@@ -129,6 +129,22 @@ The data returned within the body of this request will look something like the f
 
 This data gives you the path portions of two URL's. The "change" is the change you just uploaded. The "sequence" is a URL which you can use to get all changes posted __after__ this one, it does not include this change itself.
 
+### Integration with the rest of your system.
+
+ReferenceServer also will expose an event which allows you to get notification of when data has been added. It is used like this:
+
+	referenceServer.listenForFed(
+		function(seqId, dataset, datakey, processedQueueitem, processedJrec) {
+			console.log(
+				"A change has been added to " + dataset + "." + datakey + " which is " +
+				"sequenceId " + sequenceId + ".\n\n" +
+				"The update was " + JSON.stringify(processedQueueitem) + " and it " +
+				"resulted in the the following data being stored:\n\n" +
+				JSON.stringify(processedJrec)
+			);
+		}
+	);
+
 ## Usage
 
 Note this is mostly taken from the [SyncItTodoMvc](https://github.com/forbesmyester/SyncItTodoMvc) project.
