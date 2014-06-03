@@ -23,12 +23,12 @@ var getModifierFromRequestHackFunc = function(req) {
 };
 
 describe('When SyncItTestServ responds to a getDatasetNames request',function() {
-	
+
 	var syncItTestServer = new ReferenceServer(
 		getModifierFromRequestHackFunc,
 		new SyncIt_ServerPersist_MemoryAsync()
 	);
-	
+
 	it('should respond with an empty object, when it is',function(done) {
 		syncItTestServer.getDatasetNames({},function(e, status, data) {
 			expect(e).to.equal(null);
@@ -40,24 +40,24 @@ describe('When SyncItTestServ responds to a getDatasetNames request',function() 
 });
 
 describe('When SyncItTestServ responds to a PATCH request',function() {
-	
+
 	var syncItTestServer = new ReferenceServer(
 		getModifierFromRequestHackFunc,
 		new SyncIt_ServerPersist_MemoryAsync(),
 		{send: function() {}}
 	);
-	
+
 	var emitCount = 0;
 	var lastEmitQueueitem = null;
 	var lastEmitJrec = null;
-	syncItTestServer.listenForFed(function(req, seqId, dataset, datakey, queueitem, jrec) {
+	syncItTestServer.listenForFed(function(seqId, dataset, datakey, queueitem, jrec) {
 		expect(dataset).to.equal('xx');
 		expect(datakey).to.equal('yy');
 		emitCount = emitCount + 1;
 		lastEmitJrec = jrec;
 		lastEmitQueueitem = queueitem;
 	});
-	
+
 	it('will respond with created when creating data',function(done) {
 		var testCount = 0;
 		var createdCount = 0;
@@ -209,21 +209,21 @@ describe('When SyncItTestServ responds to a PATCH request',function() {
 });
 
 describe('SyncItTestServ can respond to data requests',function() {
-	
+
 	var injectR = function(ob) {
 		var r = JSON.parse(JSON.stringify(ob));
 		r.r = false;
 		return r;
 	};
-	
+
 	it('when there is a point to go from (1)',function(done) {
-		
+
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
 			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
-		
+
 		var data1 = { body: {
 			s: 'usersA',
 			k: 'me',
@@ -233,7 +233,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			o: 'set',
 			u: {name: "Jack Smith" }
 		} };
-		
+
 		var data2 = { body: {
 			s: 'usersA',
 			k: 'me',
@@ -243,11 +243,11 @@ describe('SyncItTestServ can respond to data requests',function() {
 			o: 'update',
 			u: {eyes: "Blue" }
 		} };
-		
+
 		syncItServ.PUT(data1, function(e, status /*, result */) {
 			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(data2, function(e, status /*, result */) {	
+			syncItServ.PATCH(data2, function(e, status /*, result */) {
 				expect(e).to.equal(null);
 				expect(status).to.equal('ok');
 				syncItServ.getQueueitems(
@@ -259,7 +259,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 					function(err, status, data) {
 						expect(err).to.equal(null);
 						expect(status).to.equal('ok');
-						expect(data).to.eql({		   
+						expect(data).to.eql({
 							queueitems: [ injectR(data2.body) ],
 							seqId: "usersA.me@2"
 						});
@@ -269,15 +269,15 @@ describe('SyncItTestServ can respond to data requests',function() {
 			});
 		});
 	});
-	
+
 	it('when there is no point to go from (2)',function(done) {
-		
+
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
 			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
-		
+
 		var data1 = { body: {
 			s: 'usersB',
 			k: 'me',
@@ -287,7 +287,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			o: 'set',
 			u: {name: "Jack Smith" }
 		} };
-		
+
 		var data2 = { body: {
 			s: 'usersB',
 			k: 'me',
@@ -297,19 +297,19 @@ describe('SyncItTestServ can respond to data requests',function() {
 			o: 'update',
 			u: {eyes: "Blue" }
 		} };
-		
+
 		syncItServ.PUT(data1, function(e, status /*, result */) {
 			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(data2, function(e, status /*, result */) {	
+			syncItServ.PATCH(data2, function(e, status /*, result */) {
 				expect(e).to.equal(null);
-				expect(status).to.equal('ok');				  
+				expect(status).to.equal('ok');
 				syncItServ.getQueueitems(
 					{ params: {s: 'usersB'}, body: {m: 'me'} },
 					function(e, status, data) {
 						expect(e).to.equal(null);
 						expect(status).to.equal('ok');
-						expect(data).to.eql({		   
+						expect(data).to.eql({
 							queueitems: [
 								injectR(data1.body),
 								injectR(data2.body)
@@ -321,17 +321,17 @@ describe('SyncItTestServ can respond to data requests',function() {
 				);
 			});
 		});
-		
+
 	});
-	
+
 	it('for items at a specific version',function(done) {
-	
+
 		var syncItServ = new ReferenceServer(
 			getModifierFromRequestHackFunc,
 			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
-		
+
 		var data1 = { body: {
 			s: 'usersB',
 			k: 'me',
@@ -341,7 +341,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			o: 'set',
 			u: {name: "Jack Smith" }
 		} };
-		
+
 		var data2 = { body: {
 			s: 'usersB',
 			k: 'me',
@@ -351,11 +351,11 @@ describe('SyncItTestServ can respond to data requests',function() {
 			o: 'update',
 			u: {eyes: "Blue" }
 		} };
-		
+
 		syncItServ.PUT(data1, function(e, status /*, result */) {
 			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(data2, function(e, status /*, result */) {	
+			syncItServ.PATCH(data2, function(e, status /*, result */) {
 				expect(e).to.equal(null);
 				expect(status).to.equal('ok');
 				syncItServ.getDatasetDatakeyVersion(
@@ -367,10 +367,10 @@ describe('SyncItTestServ can respond to data requests',function() {
 						done();
 					}
 				);
-				
+
 			});
 		});
-	
+
 	});
 
 	var getMultiTestData = function() {
@@ -413,9 +413,9 @@ describe('SyncItTestServ can respond to data requests',function() {
 			} },
 		];
 	};
-	
+
 	var getMultiQueueitemsTest = function(input, expected, done) {
-		
+
 		var testData = getMultiTestData();
 
 		var syncItServ = new ReferenceServer(
@@ -423,7 +423,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 			new SyncIt_ServerPersist_MemoryAsync(),
 			{ send: function() {} }
 		);
-		
+
 		var doTest = function() {
 			syncItServ.getMultiQueueitems(
 				{body: input},
@@ -435,17 +435,17 @@ describe('SyncItTestServ can respond to data requests',function() {
 				}
 			);
 		};
-		
+
 		syncItServ.PUT(testData[0], function(e, status /*, result */) {
 			expect(e).to.equal(null);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(testData[1], function(e, status /*, result */) {	
+			syncItServ.PATCH(testData[1], function(e, status /*, result */) {
 				expect(e).to.equal(null);
 				expect(status).to.equal('ok');
-				syncItServ.PUT(testData[2], function(e, status /*, result */) {	
+				syncItServ.PUT(testData[2], function(e, status /*, result */) {
 					expect(e).to.equal(null);
 					expect(status).to.equal('created');
-					syncItServ.push(testData[3], function(e, status /*, result */) {	
+					syncItServ.push(testData[3], function(e, status /*, result */) {
 						expect(e).to.equal(null);
 						expect(status).to.equal('created');
 						doTest();
@@ -458,19 +458,19 @@ describe('SyncItTestServ can respond to data requests',function() {
 	it('getMultiQueueitems will give sensible feedback when given no query', function(done) {
 		getMultiQueueitemsTest({}, {}, done);
 	});
-	
+
 	it('getMultiQueueitems will give sensible feedback when given an empty query', function(done) {
 		getMultiQueueitemsTest({q: []}, {}, done);
 	});
-	
+
 	it('getMultiQueueitems will give sensible feedback when a non matching query given', function(done) {
 		getMultiQueueitemsTest({q: [{s: 'xxx'}]}, {xxx: {queueitems: [], seqId: null}}, done);
 	});
-	
+
 	it('getMultiQueueitems give sensible back when a single dataset query given', function(done) {
 		getMultiQueueitemsTest(
 			{q: [{s: 'usersA'}]},
-			{		   
+			{
 				usersA: {
 					queueitems: [
 						injectR(getMultiTestData()[0].body),
@@ -483,11 +483,11 @@ describe('SyncItTestServ can respond to data requests',function() {
 			done
 		);
 	});
-	
+
 	it('getMultiQueueitems will give sensible feedback when a multiple matching query given', function(done) {
 		getMultiQueueitemsTest(
 			{q: [{s: 'usersA', seqId: 'usersA.me@1' }, {s: 'usersB'}]},
-			{		   
+			{
 				usersA: {
 					queueitems: [
 						injectR(getMultiTestData()[1].body),
@@ -505,8 +505,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 			done
 		);
 	});
-	
-	
+
+
 });
 
 
