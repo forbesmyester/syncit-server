@@ -483,50 +483,53 @@ ReferenceServer.prototype._validateInputFieldAgainstRegexp = function(field,rege
 };
 
 ReferenceServer.prototype._validate_queueitem = function(req) {
-	
+
 	var reqInfo = this._extractInfoFromRequest(req);
-	
+
 	// dataset
 	if (!this._validateInputFieldAgainstRegexp(
 		's',
 		SyncIt_Constant.Validation.DATASET_REGEXP,
 		reqInfo
 	)) { return false; }
-	
+
 	// datakey
 	if (!this._validateInputFieldAgainstRegexp(
 		'k',
 		SyncIt_Constant.Validation.DATAKEY_REGEXP,
 		reqInfo
 	)) { return false; }
-	
+
 	// modifier
 	if (!this._validateInputFieldAgainstRegexp(
 		'm',
 		SyncIt_Constant.Validation.MODIFIER_REGEXP,
 		reqInfo
 	)) { return false; }
-	
+
 	// operation
 	if (!this._validateInputFieldAgainstRegexp(
 		'o',
 		SyncIt_Constant.Validation.OPERATION_REGEXP,
 		reqInfo
 	)) { return false; }
-	
+
 	for (var i=0; i < queueitemProperties.length; i++) {
 		if (!reqInfo.hasOwnProperty(queueitemProperties[i])) {
+			if ((queueitemProperties[i] === 'u') && (reqInfo.o === 'remove')) {
+				continue;
+			}
 			return false;
 		}
 	}
-	
+
 	return true;
 };
 
 
 /**
  * ### ReferenceServer.listenForFed()
- * 
+ *
  * Listen for data changes.
  *
  * #### Parameters
