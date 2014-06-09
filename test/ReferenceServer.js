@@ -382,7 +382,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 				m: 'me',
 				t: 99,
 				o: 'set',
-				u: {name: "Jack Smith" }
+				u: {name: "Jack Smith" },
+				_q: 'usersA.me@1'
 			} },
 			{ body: {
 				s: 'usersA',
@@ -391,7 +392,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 				m: 'me',
 				t: 99,
 				o: 'update',
-				u: {eyes: "Blue" }
+				u: {eyes: "Blue" },
+				_q: 'usersA.me@2'
 			} },
 			{ body: {
 				s: 'usersB',
@@ -400,7 +402,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 				m: 'me',
 				t: 99,
 				o: 'set',
-				u: {eyes: "Blue" }
+				u: {eyes: "Blue" },
+				_q: 'usersB.other@1'
 			} },
 			{ body: {
 				s: 'usersA',
@@ -409,7 +412,8 @@ describe('SyncItTestServ can respond to data requests',function() {
 				m: 'me',
 				t: 99,
 				o: 'update',
-				u: {hair: "Brown" }
+				u: {hair: "Brown" },
+				_q: 'usersA.hair@1'
 			} },
 		];
 	};
@@ -426,7 +430,7 @@ describe('SyncItTestServ can respond to data requests',function() {
 
 		var doTest = function() {
 			syncItServ.getMultiQueueitems(
-				{body: input},
+				{body: { dataset: input} },
 				function(e, status, data) {
 					expect(e).to.equal(null);
 					expect(status).to.equal('ok');
@@ -436,17 +440,21 @@ describe('SyncItTestServ can respond to data requests',function() {
 			);
 		};
 
-		syncItServ.PUT(testData[0], function(e, status /*, result */) {
+		syncItServ.PUT(testData[0], function(e, status, result) {
 			expect(e).to.equal(null);
+			expect(result.sequence.replace(/.*\//,'')).to.equal(getMultiTestData()[0].body._q);
 			expect(status).to.equal('created');
-			syncItServ.PATCH(testData[1], function(e, status /*, result */) {
+			syncItServ.PATCH(testData[1], function(e, status, result) {
 				expect(e).to.equal(null);
+				expect(result.sequence.replace(/.*\//,'')).to.equal(getMultiTestData()[1].body._q);
 				expect(status).to.equal('ok');
-				syncItServ.PUT(testData[2], function(e, status /*, result */) {
+				syncItServ.PUT(testData[2], function(e, status, result) {
 					expect(e).to.equal(null);
+					expect(result.sequence.replace(/.*\//,'')).to.equal(getMultiTestData()[2].body._q);
 					expect(status).to.equal('created');
-					syncItServ.push(testData[3], function(e, status /*, result */) {
+					syncItServ.push(testData[3], function(e, status, result) {
 						expect(e).to.equal(null);
+						expect(result.sequence.replace(/.*\//,'')).to.equal(getMultiTestData()[3].body._q);
 						expect(status).to.equal('created');
 						doTest();
 					});
@@ -459,26 +467,19 @@ describe('SyncItTestServ can respond to data requests',function() {
 		getMultiQueueitemsTest({}, {}, done);
 	});
 
-	it('getMultiQueueitems will give sensible feedback when given an empty query', function(done) {
-		getMultiQueueitemsTest({q: []}, {}, done);
-	});
-
 	it('getMultiQueueitems will give sensible feedback when a non matching query given', function(done) {
-		getMultiQueueitemsTest({q: [{s: 'xxx'}]}, {xxx: {queueitems: [], seqId: null}}, done);
+		getMultiQueueitemsTest({'xxx': ''}, {xxx: []}, done);
 	});
 
 	it('getMultiQueueitems give sensible back when a single dataset query given', function(done) {
 		getMultiQueueitemsTest(
-			{q: [{s: 'usersA'}]},
+			{usersA: ''},
 			{
-				usersA: {
-					queueitems: [
-						injectR(getMultiTestData()[0].body),
-						injectR(getMultiTestData()[1].body),
-						injectR(getMultiTestData()[3].body)
-					],
-					seqId: "usersA.hair@1"
-				}
+				usersA: [
+					injectR(getMultiTestData()[0].body),
+					injectR(getMultiTestData()[1].body),
+					injectR(getMultiTestData()[3].body)
+				]
 			},
 			done
 		);
@@ -486,21 +487,15 @@ describe('SyncItTestServ can respond to data requests',function() {
 
 	it('getMultiQueueitems will give sensible feedback when a multiple matching query given', function(done) {
 		getMultiQueueitemsTest(
-			{q: [{s: 'usersA', seqId: 'usersA.me@1' }, {s: 'usersB'}]},
+			{usersA: 'usersA.me@1', usersB: ''},
 			{
-				usersA: {
-					queueitems: [
-						injectR(getMultiTestData()[1].body),
-						injectR(getMultiTestData()[3].body)
-					],
-					seqId: "usersA.hair@1"
-				},
-				usersB: {
-					queueitems: [
-						injectR(getMultiTestData()[2].body)
-					],
-					seqId: "usersB.other@1"
-				}
+				usersA: [
+					injectR(getMultiTestData()[1].body),
+					injectR(getMultiTestData()[3].body)
+				],
+				usersB: [
+					injectR(getMultiTestData()[2].body)
+				]
 			},
 			done
 		);

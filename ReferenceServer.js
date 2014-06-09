@@ -1,6 +1,6 @@
 (function (root, factory) { // UMD adapted from https://github.com/umdjs/umd/blob/master/returnExports.js
 	"use strict";
-	
+
 	if (typeof exports === 'object') {
 		module.exports = factory(
 			require('sync-it/Constant.js'),
@@ -31,11 +31,11 @@ var queueitemProperties = ['s','k','b','m','t','u','o'];
 
 /**
  * ### new ReferenceServer()
- * 
+ *
  * Constructor
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {ServerImplementation} `serverImplementation`**
  * * **@param {Function} `extractModifierFromRequestFunc`** This function will be used to get the modifier for a Dataset / Datakey, it is anticipated this is from the Express Request.
  */
@@ -50,7 +50,7 @@ var ReferenceServer = function(extractModifierFromRequestFunc, serverImplementat
 
 /**
  * ### ReferenceServer.getDatasetNames()
- * 
+ *
  * Retrieves a list of *Dataset* names.
  *
  * #### Parameters
@@ -69,7 +69,7 @@ ReferenceServer.prototype.getDatasetNames = function(req, responder) {
 
 /**
  * ### ReferenceServer.getQueueitems()
- * 
+ *
  * Retrieves a list of Queueitem from a previously known one.
  *
  * #### Parameters
@@ -77,12 +77,13 @@ ReferenceServer.prototype.getDatasetNames = function(req, responder) {
  * * **@param {Request} `req`** A Express like Request Object
  *	 * **@param {String} `req.(param|query|body).s`** REQUIRED: The *Dataset* you want to download updates from
  *	 * **@param {String} `req.(param|query|body).seqId`** OPTIONAL: The last known Id for a Queueitem, if supplied all items from, but not including that Queueitem will be downloaded.
+ *	 * **@param {Boolean} `req.(param|query|body)._q`** OPTIONAL: Whether you want to include include server sequence Ids in the output under the object key `_q`.
  * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
  *	 * **@param {String} `responder.statusString`** 'bad_request' if no dataset supplied, 'ok' otherwise.
  *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 ReferenceServer.prototype.getQueueitems = function(req, responder) {
-	var reqInfo = this._extractInfoFromRequest(req, ['seqId']);
+	var reqInfo = this._extractInfoFromRequest(req, ['seqId', '_q']);
 	if (!this._validateInputFieldAgainstRegexp(
 		's',
 		SyncIt_Constant.Validation.DATASET_REGEXP,
@@ -95,6 +96,11 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
 		reqInfo.hasOwnProperty('seqId') ? reqInfo.seqId : null,
 		function(err, status, queueitems, toSeqId) {
 			if (err) { return responder(err); }
+			if (!reqInfo.hasOwnProperty('_q') || !reqInfo._q) {
+				for (var i=0; i<queueitems.length; i++) {
+					delete queueitems[i]._q;
+				}
+			}
 			return responder(err, 'ok',{ queueitems: queueitems, seqId: toSeqId});
 		}
 	);
@@ -108,26 +114,17 @@ ReferenceServer.prototype.getQueueitems = function(req, responder) {
  * #### Parameters
  *
  * * **@param {Request} `req`** A Express like Request Object
- *	 * **@param {Array} `req.(param|query|body).q`** Query: An array of sub queries turn
- *	 * **@param {Object} `req.(param|query|body).q.<n> The sub queries themselves.
- *	 * **@param {String} `req.(param|query|body).q.<n>.s REQUIRED: The *Dataset* you want to download updates from.
- *	 * **@param {String} `req.(param|query|body).q.<n>.seqId OPTIONAL: The last known Id for a Queueitem, if supplied all items from, but not including that Queueitem will be downloaded.
- * * **@param {Function} `responder`** Callback. Signature: `function (statusString, data)`
+ *	 * **@param {String} `req.(param|query|body)[s]=seqId The dataset (`s`) and sequenceId (`seqId`) to read from. seqId can be an empty string to mean read everything.
+ * * **@param {Function} `responder`** Callback. Signature: `function (err, statusString, data)`
  *	 * **@param {String} `responder.statusString`** 'bad_request' if no dataset supplied, 'ok' otherwise.
  *	 * **@param {Object} `responder.data`** An object in the form `{queueitems: [<Queueitem>,<Queu...>], seqId: <QueueitemId>}`
  */
 ReferenceServer.prototype.getMultiQueueitems = function(req, responder) {
-	var reqInfo = this._extractInfoFromRequest(req, ['q']),
-		returned = 0,
+	var returned = 0,
 		dataSoFar = {},
 		errored = false,
-		i, length;
-
-	if ((!reqInfo.hasOwnProperty('q') || !reqInfo.q.length)) {
-		return responder(null, 'ok', {});
-	}
-
-	length = reqInfo.q.length;
+		length = 0,
+		k, q;
 
 	var processed = function(dataset, err, status, data) {
 
@@ -135,25 +132,35 @@ ReferenceServer.prototype.getMultiQueueitems = function(req, responder) {
 		if (err) { errored = true; return responder(err); }
 		if (status != 'ok') { errored = true; return responder(err, status); }
 
-		dataSoFar[dataset] = data;
-		
+		dataSoFar[dataset] = data.queueitems;
+
 		if (++returned == length) {
 			return responder(null, 'ok', dataSoFar);
 		}
 	};
-	
-	for (i=0; i<length; i++) {
-		if (!reqInfo.q[i].hasOwnProperty('s')) {
-			processed(null, 'ok', {});
-			continue;
+
+	var reqData = this._extractAllFromRequest(req);
+
+	if (reqData.hasOwnProperty('dataset')) {
+		for (k in reqData.dataset) {
+			if (reqData.dataset.hasOwnProperty(k)) {
+				q = {body: {s: k, _q: true}};
+				if ((reqData.dataset[k] !== '') && (reqData.dataset[k] !== null)) {
+					q.body.seqId = reqData.dataset[k];
+				}
+				length++;
+				this.getQueueitems(q, processed.bind(this, k));
+			}
 		}
-		this.getQueueitems({body: reqInfo.q[i]}, processed.bind(this, reqInfo.q[i].s));
+	}
+	if (!length) {
+		responder(null, 'ok', {});
 	}
 
 };
 /**
  * ### ReferenceServer.getDatasetDatakeyVersion()
- * 
+ *
  * Retrieves a list of Queueitem from a previously known one.
  *
  * #### Parameters
@@ -210,7 +217,7 @@ ReferenceServer.prototype.getDatasetDatakeyVersion = function(req, responder) {
  */
 ReferenceServer.prototype.getValue = function(req, responder) {
 	var reqInfo = this._extractInfoFromRequest(req);
-	
+
 	if (!this._validateInputFieldAgainstRegexp(
 		's',
 		SyncIt_Constant.Validation.DATASET_REGEXP,
@@ -221,7 +228,7 @@ ReferenceServer.prototype.getValue = function(req, responder) {
 		SyncIt_Constant.Validation.DATAKEY_REGEXP,
 		reqInfo
 	)) { return responder(null, 'bad_request',null); }
-	
+
 	this._inst.getValue(reqInfo.s, reqInfo.k,
 		function(err, status, jrec) {
 			if (err) { return responder(err); }
@@ -238,8 +245,8 @@ ReferenceServer.prototype.getValue = function(req, responder) {
 
 /**
  * ### ReferenceServer._setRemoveOrUpdate()
- * 
- * ReferenceServer.PATCH(), TestServer.PUT() and TestServer.DELETE() really all do 
+ *
+ * ReferenceServer.PATCH(), TestServer.PUT() and TestServer.DELETE() really all do
  * the same thing, that being to put a Queueitem on the Queue and then calculate
  * the result of that operation. Therefore all the functions wrap this general
  * purpose function.
@@ -257,17 +264,17 @@ ReferenceServer.prototype.push = function(req, responder) {
 	if (!this._validate_queueitem(req)) {
 		return responder(null, 'bad_request', null);
 	}
-	
+
 	var queueitem = this._extractInfoFromRequest(req);
 
 	if (!queueitem.hasOwnProperty('o')) {
 		return responder(null, 'bad_request');
 	}
-	
+
 	if (!queueitem.hasOwnProperty('b')) {
 		return responder(null, 'bad_request');
 	}
-	
+
 	var getHttpStatus = function(syncItStatus) {
 		switch (syncItStatus) {
 			case SyncIt_Constant.Error.TRYING_TO_ADD_FUTURE_QUEUEITEM:
@@ -281,11 +288,11 @@ ReferenceServer.prototype.push = function(req, responder) {
 		}
 		return 'ok';
 	};
-	
+
 	this._inst.push(queueitem, function(err, status, processedQueueitem, processedJrec, seqId) {
 
 		if (err) { return responder(err); }
-		
+
 		if (status === SyncIt_Constant.Error.TRYING_TO_ADD_ALREADY_ADDED_QUEUEITEM) {
 			return responder(
 				err,
@@ -298,7 +305,7 @@ ReferenceServer.prototype.push = function(req, responder) {
 				}
 			);
 		}
-		
+
 		if (status !== SyncIt_Constant.Error.OK) {
 			return responder(err, getHttpStatus(status), null);
 		}
@@ -311,32 +318,29 @@ ReferenceServer.prototype.push = function(req, responder) {
 			processedQueueitem,
 			processedJrec
 		);
-		
+
 		this._sseCommunication.send(
 			this._getModifier(req),
 			processedQueueitem.s,
 			'queueitem',
-			{
-				queueitem: processedQueueitem,
-				seqId: seqId
-			}
+			processedQueueitem
 		);
-		
+
 		responder(
 			err,
 			queueitem.b === 0 ? 'created' : 'ok',
 			{
-				sequence: '/syncit/sequence/' + 
+				sequence: '/syncit/sequence/' +
 					processedQueueitem.s + '/' + seqId,
 				change: '/syncit/change/' +
 					processedQueueitem.s + '/' +
-					processedQueueitem.k + '/' + 
+					processedQueueitem.k + '/' +
 					(processedQueueitem.b + 1)
 			}
 		);
-		
+
 	}.bind(this));
-	
+
 };
 
 
@@ -379,11 +383,11 @@ ReferenceServer.prototype.DELETE = function(req,responder) {
 
 /**
  * ### ReferenceServer._extractInfoFromRequest()
- * 
+ *
  * Extracts Queueitem information and any extra from an express `req`.
- * 
+ *
  * Expects to see something like the following:
- * 
+ *
  * ```
  * {
  *	   s: <Dataset>,
@@ -404,12 +408,12 @@ ReferenceServer.prototype.DELETE = function(req,responder) {
  * * **@param {Array} `extras`** See description.
  */
 ReferenceServer.prototype._extractInfoFromRequest = function(req, extras) {
-	
+
 	var r = {},
 		i = 0,
 		j = 0,
 		inputZones = ['body', 'query', 'params'];
-	
+
 	for (i=0; i<inputZones.length; i++) {
 		if (!req.hasOwnProperty(inputZones[i])) {
 			continue;
@@ -427,11 +431,11 @@ ReferenceServer.prototype._extractInfoFromRequest = function(req, extras) {
 			}
 		}
 	}
-	
+
 	r.m = this._getModifier(req);
-	
+
 	var fixTypesBeforeStore = function(ob) {
-		
+
 		var forceStr = function(v) { return "" + v; };
 		var forceInt = function(v) { return parseInt(v,10); };
 		var forceBool = function(v) { return v ? true : false; };
@@ -441,7 +445,7 @@ ReferenceServer.prototype._extractInfoFromRequest = function(req, extras) {
 			}
 			return ob;
 		};
-		
+
 		ob = forceField(ob, 's', forceStr);
 		ob = forceField(ob, 'k', forceStr);
 		ob = forceField(ob, 'b', forceInt);
@@ -449,17 +453,44 @@ ReferenceServer.prototype._extractInfoFromRequest = function(req, extras) {
 		ob = forceField(ob, 'r', forceBool);
 		ob = forceField(ob, 'o', forceStr);
 		ob = forceField(ob, 't', forceInt);
-		
+
 		return ob;
 	};
-	
+
 	return fixTypesBeforeStore(r);
 
 };
 
 /**
- * ### validateInputFieldAgainstRegex
- * 
+ * ### ReferenceServer._extractAllFromRequest()
+ *
+ * Extracts all information from the body, query and params of a request
+ *
+ * * **@param {Request} `req`** A Express like Request Object.
+ */
+ReferenceServer.prototype._extractAllFromRequest = function(req) {
+
+	var r = {},
+		i = 0,
+		inputZones = ['body', 'query', 'params'];
+
+	for (i=0; i<inputZones.length; i++) {
+		if (!req.hasOwnProperty(inputZones[i])) {
+			continue;
+		}
+		for (var k in req[inputZones[i]]) {
+			if (req[inputZones[i]].hasOwnProperty(k)) {
+				r[k] = req[inputZones[i]][k];
+			}
+		}
+	}
+
+	return r;
+};
+
+/**
+ * ### ReferenceServer.validateInputFieldAgainstRegex()
+ *
  * Validates a Request (`req`) `field` within either the `req.body` or `req.params` against a `regexp`.
  *
  * #### Parameters
@@ -555,7 +586,7 @@ ReferenceServer.prototype.listenForFed = function(listener) {
  * * **@param {Function} `listener`** The function which will be fired when the event occurs
  */
 ReferenceServer.prototype.listen = function(event,listener) {
-	
+
 	var propertyNames = (function(ob) {
 		var r = [];
 		for (var k in ob) { if (ob.hasOwnProperty(k)) {
@@ -563,7 +594,7 @@ ReferenceServer.prototype.listen = function(event,listener) {
 		} }
 		return r;
 	})(this._listeners);
-	
+
 	if (propertyNames.indexOf(event) == -1) {
 		return false;
 	}
@@ -571,29 +602,39 @@ ReferenceServer.prototype.listen = function(event,listener) {
 	return true;
 };
 
-ReferenceServer.prototype.sync = function(req, res) {
-	
+ReferenceServer.prototype.sync = function(req, res, next) {
+
+	var datasets = [],
+		k;
+
 	if (
-		(!req.query.hasOwnProperty('dataset')) ||
-		(!Array.isArray(req.query.dataset))
+		(!req.query.hasOwnProperty('dataset'))
 	) {
 		return res.send(400, "You must specify a list of dataset");
 	}
-	
+
 	res.writeHead(200, {
 		'Content-Type': 'text/event-stream',
 		'Cache-Control': 'no-cache',
 		'Connection': 'keep-alive'
 	});
-	
+
+	for (k in req.query.dataset) {
+		if (req.query.dataset.hasOwnProperty(k)) {
+			datasets.push(k);
+		}
+	}
+
 	this._sseCommunication.register(
 		this._getModifier(req),
-		req.query.dataset,
+		datasets,
 		res
 	);
+
+	return next(null, req, res);
 };
 
-	
+
 addEvents(ReferenceServer,['fed']);
 
 return ReferenceServer;

@@ -1,6 +1,6 @@
 (function (root, factory) { // UMD adapted from https://github.com/umdjs/umd/blob/master/returnExports.js
 	"use strict";
-	
+
 	if (typeof exports === 'object') {
 		module.exports = factory(
 			require('sync-it/Constant.js'),
@@ -22,17 +22,17 @@
 
 /**
  * ## SyncIt_ServerPersist_MemoryAsync
- * 
+ *
  * An Asynchronous Memory based Persistance for SyncItTestServ suitable for testing.
  */
 
 /**
  * **makeLaggy()**
- * 
+ *
  * Takes a function and makes it Asynchrounous by wrapping it in a `setTimeout()`.
- * 
+ *
  * **Parameters**
- * 
+ *
  * * **@param {} `func`** The function to make Asynchronous.
  * * **@param {} `factor`** Will use an asynchronous timeout of `([random] * factor`) + 2`.
  * * **@return {Function}** An Asynchrounous version of the Function.
@@ -49,11 +49,11 @@ var makeLaggy = function(func, factor) {
 
 /**
  * **onlyInsert()**
- * 
+ *
  * Adds a value to the Array `d` if value.b is one higher than storedValue.b
- * 
+ *
  * **Parameters**
- * 
+ *
  * * **@param {Array} `d`** Data - An array
  * * **@param {Object} `value`** Must include keys `s`, `k` and `b`
  * * **@param {Function} `done`** Callback. Signature: `function(successful)`
@@ -71,11 +71,11 @@ var onlyInsert = makeLaggy(function(d, value, done) {
 
 /**
  * **filterFunc()**
- * 
+ *
  * Will return true if `item` has the same keys with values as `filter`.
- * 
+ *
  * **Parameters**
- * 
+ *
  * * **@param {Queueitem} `item`** Must `have all the`** keys in `filter` with the same values.
  * * **@param {Object} `filter`**
  * * **@return {Boolean}** True if it matches.
@@ -84,7 +84,7 @@ var filterFunc = function(item, filter) {
 	var filterkeys = Object.getOwnPropertyNames(filter),
 		filterkeysL = filterkeys.length,
 		filterkeysI = 0;
-	
+
 	for (filterkeysI=0; filterkeysI<filterkeysL; filterkeysI++) {
 		if (!item.hasOwnProperty(filterkeys[filterkeysI])) {
 			return false;
@@ -98,24 +98,24 @@ var filterFunc = function(item, filter) {
 
 /**
  * **findHighestInstant()**
- * 
+ *
  * Scans `d` for data that matches the filter `filter` and returns the item with the highest field `field`.
- * 
+ *
  * **Parameters**
- * 
+ *
  * * **@param {Array} `d`** should be `this._d`
  * * **@param {Object} `filter`** Takes the form of an object, for example `{field_i_want: to_have_this_value}`.
  * * **@param {String} `field`** The field that you are looking to have the highest Number of.
  * * **@param {Function} `done`** Signature: `function (successful, highestObject)`
  * * **@param {Boolean} `done.successful`** True on success
  * * **@param {Queueitem} `done.highestObject`** The data which matches `filter` with the highest `field`.
- */ 
+ */
 var findHighestInstant = function(d, filter, field, done) {
 	var storekeysL = d.length,
 		storekeysI = 0,
 		ok = true,
 		highest = null;
-		
+
 	for (storekeysI = 0; storekeysI<storekeysL; storekeysI++) {
 		ok = true;
 		if (!d[storekeysI].hasOwnProperty(field)) {
@@ -133,14 +133,14 @@ var findHighestInstant = function(d, filter, field, done) {
 
 /**
  * **findHighest()**
- * 
+ *
  * Laggy version of findHighestInstant.
  */
 var findHighest = makeLaggy(findHighestInstant, 100);
 
 /**
  * **getSeqIdFromQueueitem()**
- * 
+ *
  * Returns a unique (to the server) identifier for a Queueitem within a dataset
  */
 var getSeqIdFromQueueitem = function(queueitem) {
@@ -159,9 +159,9 @@ var SyncIt_ServerPersist_MemoryAsync = function(cloneFunc) {
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getDatasetNames()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {Function} `done`** Signature: `function (err, status, datasetNames)`
  *   * **@param {Errorcode} `done.err`**
  *   * **@param {Errorcode} `done.status`** See SyncIt_Constant.Error
@@ -181,9 +181,9 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetNames = function(done) {
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getQueueitems()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`**
  * * **@param {Number|null} `fromSeqId`** Where to read Queueitem from (not inclusive).
  * * **@param {Function} `done`** Signature: `done(err, status, queueitems, lastQueueitemIdentifier)`
@@ -193,7 +193,7 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetNames = function(done) {
  *   * **@param {Object} `done.lastQueueitemIdentifier`** The internal reference of that last item, passing this to this function again will lead to continual reading.
  */
 SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset, fromSeqId, done) {
-	
+
 	(makeLaggy(function() {
 		var r = [],
 			l = 0,
@@ -218,7 +218,8 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset, fro
 					r: this._d[i].r ? true : false,
 					u: this._d[i].u,
 					o: this._d[i].o,
-					t: this._d[i].t
+					t: this._d[i].t,
+					_q: getSeqIdFromQueueitem(this._d[i])
 				});
 			}
 			if (
@@ -234,14 +235,14 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset, fro
 		}
 		return done(null, SyncIt_Constant.Error.OK, r, lastId);
 	}.bind(this), 200))();
-	
+
 };
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getDatasetDatakeyVersion()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`** The *Dataset* you want to download the update for
  * * **@param {String} `datakey`** The *Datakey* you want to download the update for
  * * **@param {Number} `version`** The *Version* of the update you want to get
@@ -251,7 +252,7 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getQueueitems = function(dataset, fro
  *   * **@param {Object} `responder.data`** The change
  */
 SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetDatakeyVersion = function(dataset, datakey, version, done) {
-	
+
 	(makeLaggy(function() {
 		var l = 0,
 			i = 0;
@@ -266,15 +267,15 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getDatasetDatakeyVersion = function(d
 		}
 		return done(null, SyncIt_Constant.Error.NO_DATA_FOUND);
 	}.bind(this), 200))();
-	
+
 };
 
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getLastQueueitem()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`**
  * * **@param {String} `datakey`**
  * * **@param {Function} `done`** Signature: `function (err, status, jrec)`
@@ -301,9 +302,9 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getLastQueueitem = function(dataset, 
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getValue()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`**
  * * **@param {String} `datakey`**
  * * **@param {Function} `done`** Signature: `function (err, status jrec)`
@@ -326,9 +327,9 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getValue = function(dataset, datakey,
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.push()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {Queueitem} `queueitem`**
  * * **@param {Function} `done`** Signature: `function (err, status, queueitem, jrec, seqId)`
  *   * **@param {Number} `done.err`**
@@ -338,28 +339,28 @@ SyncIt_ServerPersist_MemoryAsync.prototype.getValue = function(dataset, datakey,
  *   * **@param {seqId} `done.seqId` The sequence within the dataset.
  */
 SyncIt_ServerPersist_MemoryAsync.prototype.push = function(queueitem, done) {
-	
+
 	var inst = this;
 	var attempts = 0;
-	
+
 	var doIt = function() {
-		
+
 		findHighest(
 			inst._d,
 			{"s":queueitem.s, "k":queueitem.k},
 			'b',
 			function(success, storedQueueitem) {
-				
+
 				var result = CommonFuncs.getResultingJrecBasedOnOld(
 					inst._cloneFunc,
 					storedQueueitem,
 					queueitem
 				);
-				
+
 				if (result.status) {
 					return(done(null, result.status, result.resultingJrec));
 				}
-				
+
 				// Try and insert the record.
 				onlyInsert(
 					inst._d,
@@ -375,8 +376,8 @@ SyncIt_ServerPersist_MemoryAsync.prototype.push = function(queueitem, done) {
 						j: result.resultingJrec
 					},
 					function(success) {
-						
-						// If it passed all the tests above, but was not 
+
+						// If it passed all the tests above, but was not
 						// successful writing, it might well be that we are in
 						// some form or race condition... going around again
 						// should pick up the real reason.
@@ -387,7 +388,7 @@ SyncIt_ServerPersist_MemoryAsync.prototype.push = function(queueitem, done) {
 							return doIt();
 						}
 						return done(
-							null, 
+							null,
 							SyncIt_Constant.Error.OK,
 							queueitem,
 							result.resultingJrec,
@@ -395,15 +396,15 @@ SyncIt_ServerPersist_MemoryAsync.prototype.push = function(queueitem, done) {
 						);
 					}
 				);
-				
+
 			}
 		);
-	
+
 	};
-	
+
 	doIt();
 };
 
 return SyncIt_ServerPersist_MemoryAsync;
-	
+
 });

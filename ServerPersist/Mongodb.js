@@ -22,13 +22,13 @@ var getIncrementalNumber = require('./getIncrementalNumberFromMongodb');
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync()
- * 
+ *
  * Constructor.
  *
  * * **@param {Function} `cloneFunc`** The function to used for cloning.
  * * **@param {MongoskinConnection} `mongoskinConnection`** Must be connected.
  * * **@param {String} `ObjectID`** The ObjectId class from MongoDB / Mongoskin
- * * **@param {String} `dataCollection`** The name of the collection to store (accepted) data in. 
+ * * **@param {String} `dataCollection`** The name of the collection to store (accepted) data in.
  * * **@param {Function} `logger`** Optional function will will log information during DB insertions.
  */
 var SyncIt_ServerPersist_MongoDb = function(cloneFunc, mongoskinConnection, ObjectID, dataCollection, logger) {
@@ -62,9 +62,9 @@ SyncIt_ServerPersist_MongoDb.prototype._find = function(collection, query, done)
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getDatasetNames()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {Function} `done`** Signature: `function (err, status, datasetNames)`
  *   * **@param {Errorcode} `done.err`**
  *   * **@param {Array} `done.datasetNames`** The names of all Dataset
@@ -94,25 +94,26 @@ SyncIt_ServerPersist_MongoDb.prototype._unserialize = function(rec) {
 		u: JSON.parse(rec.u),
 		o: rec.o,
 		t: rec.t,
-		j: rec.j
+		j: rec.j,
+		_q: rec._id
 	};
 };
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getQueueitems()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`**
  * * **@param {String|null} `fromSeqId`** Where to read Queueitem from (not inclusive).
  * * **@param {Function} `done`** Signature: `done(err, status, queueitems, lastQueueitemIdentifier)`
- *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.err`**
  *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Array} `done.queueitems`** An array of Queueitem
  *   * **@param {Object} `done.lastQueueitemIdentifier`** The internal reference of that last item, passing this to this function again will lead to continual reading.
  */
 SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeqId, done) {
-	
+
 	var q = {s: dataset},
 		maxId = null;
 
@@ -123,7 +124,7 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
 		q._id = {$gt: this._ObjectID.createFromHexString(fromSeqId)};
 		maxId = fromSeqId;
 	}
-	
+
 	this._find( this._dataCollection, q, function(err, items) {
 		if (err) { return done(err); }
 		done(
@@ -138,26 +139,26 @@ SyncIt_ServerPersist_MongoDb.prototype.getQueueitems = function(dataset, fromSeq
 			maxId === null ? null : new this._ObjectID(maxId).toHexString()
 		);
 	}.bind(this));
-	
+
 };
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getDatasetDatakeyVersion()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`** The *Dataset* you want to download the update for
  * * **@param {String} `datakey`** The *Datakey* you want to download the update for
  * * **@param {Number} `version`** The *Version* of the update you want to get
  * * **@param {Function} `done`** Signature: `done(err, status, queueitems, lastQueueitemIdentifier)`
- *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.err`**
  *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Object} `responder.data`** The change
  */
 SyncIt_ServerPersist_MongoDb.prototype.getDatasetDatakeyVersion = function(dataset, datakey, version, done) {
-	
+
 	var q = {"s": dataset, "k": datakey, "b": parseInt(version,10)-1};
-	
+
 	this._find( this._dataCollection, q, function(err, items) {
 		if (err) {
 			if (err) { return done(err); }
@@ -175,7 +176,7 @@ SyncIt_ServerPersist_MongoDb.prototype.getDatasetDatakeyVersion = function(datas
 			items[0]
 		);
 	}.bind(this));
-	
+
 };
 
 SyncIt_ServerPersist_MongoDb.prototype.getLastQueueitem = function(dataset,datakey, done) {
@@ -183,7 +184,7 @@ SyncIt_ServerPersist_MongoDb.prototype.getLastQueueitem = function(dataset,datak
 };
 
 SyncIt_ServerPersist_MongoDb.prototype._getLast = function(dataset, datakey, projection, done) {
-	
+
 	this._mongoskinConnection.collection(this._dataCollection).findOne(
 		{s: dataset, k: datakey},
 		projection,
@@ -206,13 +207,13 @@ SyncIt_ServerPersist_MongoDb.prototype._getLast = function(dataset, datakey, pro
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.getValue()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {String} `dataset`**
  * * **@param {String} `datakey`**
  * * **@param {Function} `done`** Signature: `function (err, status, jrec)`
- *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.err`**
  *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Jrec} `done.jrec`** The result of all the Queueitem.
  */
@@ -228,39 +229,39 @@ SyncIt_ServerPersist_MongoDb.prototype.getValue = function(dataset, datakey, don
 
 /**
  * ### SyncIt_ServerPersist_MemoryAsync.push()
- * 
+ *
  * #### Parameters
- * 
+ *
  * * **@param {Queueitem} `queueitem`**
  * * **@param {Function} `done`** Signature: `function (err, queueitem, jrec, seqId)`
- *   * **@param {Number} `done.err`** 
+ *   * **@param {Number} `done.err`**
  *   * **@param {Number} `done.status`** See SyncIt_Constant.Error
  *   * **@param {Queueitem} `done.queueitem`** The Queueitem passed in (successful or not)
  *   * **@param {Jrec} `done.jrec`** If successul, a Jrec, otherwise `undefined`
  *   * **@param {seqId} `done.seqId` The sequence within the dataset.
  */
 SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
-	
+
 	this._logger("SyncIt: MongoDB: Push:", queueitem);
-	
+
 	this._getLast(
 		queueitem.s,
 		queueitem.k,
 		{},
 		function(err, status, storedQueueitem) {
-			
+
 			if (err) { return done(err); }
-			
+
 			this._logger("SyncIt: MongoDB: Existing:", storedQueueitem);
-			
+
 			var result = CommonFuncs.getResultingJrecBasedOnOld(
 				this._cloneFunc,
 				storedQueueitem,
 				queueitem
 			);
-			
+
 			this._logger("SyncIt: MongoDB: Proposed:",result);
-			
+
 			if (result.status) {
 				return(done(err, result.status, result.resultingJrec));
 			}
@@ -276,16 +277,16 @@ SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
 				t: queueitem.t,
 				j: result.resultingJrec
 			};
-			
+
 			this._logger("SyncIt: MongoDB: ToWrite:", toWrite);
-			
+
 			this._mongoskinConnection.collection(this._dataCollection).insert(
 				toWrite,
 				{journal: true},
 				function(mongoErr, doc) {
-					
+
 					this._logger("SyncIt: MongoDB: Insert:", mongoErr);
-					
+
 					if (mongoErr) {
 						if ( // dupe key means someone else inserted before us...
 							mongoErr.hasOwnProperty('code') &&
@@ -295,7 +296,7 @@ SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
 						}
 						return done(err);
 					}
-					
+
 					return done(
 						err,
 						SyncIt_Constant.Error.OK,
@@ -303,13 +304,13 @@ SyncIt_ServerPersist_MongoDb.prototype.push = function(queueitem, done) {
 						result.resultingJrec,
 						new this._ObjectID(doc._id).toHexString()
 					);
-					
+
 				}.bind(this)
 			);
-			
+
 		}.bind(this)
 	);
-	
+
 };
 
 return SyncIt_ServerPersist_MongoDb;
